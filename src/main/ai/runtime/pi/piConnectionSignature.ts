@@ -27,6 +27,21 @@ function stableValue(value: unknown): unknown {
   )
 }
 
+function resolveEffectiveAgentLanguage(agent: AgentEntity): string | null {
+  const perAgent = agent.configuration?.language as string | undefined
+  if (typeof perAgent === 'string' && perAgent.trim() !== '') {
+    if (perAgent === 'auto') return null
+    return perAgent
+  }
+  try {
+    const global = application.get('PreferenceService').get('agent.language') as unknown as string | null
+    if (typeof global === 'string' && global.trim() !== '' && global !== 'auto') return global
+  } catch {
+    // PreferenceService unavailable in some test harnesses
+  }
+  return null
+}
+
 export interface PiConnectionSnapshot {
   agent: AgentEntity
   session: AgentSessionEntity
@@ -45,6 +60,10 @@ export class PiInvalidConnectionSnapshotError extends Error {}
  * Capture every reconcilable fact consumed while constructing a Pi connection.
  * Prompt files intentionally remain connection-lifetime snapshots: changing them
  * does not invalidate a warm connection or its provider prompt cache.
+ * The effective agent language (per-agent `configuration.language` or global
+ * `agent.language` preference) is a rebuild fact: changing it invalidates the
+ * warm connection so the new language instruction is baked into the next
+ * connection's system prompt and prompt cache.
  */
 export async function capturePiConnectionSnapshot(
   sessionId: string,
@@ -95,7 +114,8 @@ export async function capturePiConnectionSnapshot(
           mcpServers,
           mcpTools,
           linkedChannelId: linkedChannel?.id ?? null,
-          knowledgeBaseIds: resolveKnowledgeBaseScope(agent.knowledgeBaseIds, selectedKnowledgeBaseIds)
+          knowledgeBaseIds: resolveKnowledgeBaseScope(agent.knowledgeBaseIds, selectedKnowledgeBaseIds),
+          effectiveLanguage: resolveEffectiveAgentLanguage(agent)
         })
       )
     )
