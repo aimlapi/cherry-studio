@@ -16,6 +16,7 @@ import { CHERRY_FAST_MODE_HEADER, CHERRY_INTERNAL_REQUEST_TOKEN_HEADER } from '@
 import { resolveKnowledgeBaseScope } from '@main/ai/utils/knowledgeScope'
 import { encodeReasoningInvocation, resolveReasoningInvocation } from '@main/ai/utils/reasoningSerializers'
 import { createAiUsagePricingSnapshot } from '@main/ai/utils/usageCapture'
+import { getAppLanguage } from '@main/i18n'
 import { getProxyEnvironment } from '@main/services/proxy/proxyEnv'
 import { defaultAppHeaders } from '@main/utils/http'
 import type { AgentEntity } from '@shared/data/api/schemas/agents'
@@ -143,7 +144,11 @@ function resolveEffectiveAgentLanguage(agent: AgentEntity): string | null {
   } catch {
     // PreferenceService unavailable in some test harnesses
   }
-  return null
+  try {
+    return getAppLanguage()
+  } catch {
+    return null
+  }
 }
 
 function fingerprintCredentials(material: string[]): string {

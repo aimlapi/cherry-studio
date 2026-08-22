@@ -8,6 +8,7 @@ import { mcpServerService } from '@data/services/McpServerService'
 import { modelService } from '@data/services/ModelService'
 import { providerService } from '@data/services/ProviderService'
 import { gatewayCredentialsFingerprint } from '@main/ai/runtime/agentApiGateway'
+import { getAppLanguage } from '@main/i18n'
 import type { McpServerSnapshotMap } from '@main/ai/runtime/agentMcpServers'
 import { resolveDshInjectionApi } from '@main/ai/runtime/dsh/modelInjection'
 import { skillService } from '@main/ai/skills/SkillService'
@@ -41,7 +42,11 @@ function resolveEffectiveAgentLanguage(agent: AgentEntity): string | null {
   } catch {
     // PreferenceService unavailable in some test harnesses
   }
-  return null
+  try {
+    return getAppLanguage()
+  } catch {
+    return null
+  }
 }
 
 export interface DshConnectionSnapshot {

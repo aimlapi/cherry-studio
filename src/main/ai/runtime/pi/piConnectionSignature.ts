@@ -7,6 +7,7 @@ import { agentSessionService } from '@data/services/AgentSessionService'
 import { mcpServerService } from '@data/services/McpServerService'
 import { modelService } from '@data/services/ModelService'
 import { providerService } from '@data/services/ProviderService'
+import { getAppLanguage } from '@main/i18n'
 import type { McpServerSnapshotMap } from '@main/ai/runtime/agentMcpServers'
 import { skillService } from '@main/ai/skills/SkillService'
 import { resolveKnowledgeBaseScope } from '@main/ai/utils/knowledgeScope'
@@ -39,7 +40,11 @@ function resolveEffectiveAgentLanguage(agent: AgentEntity): string | null {
   } catch {
     // PreferenceService unavailable in some test harnesses
   }
-  return null
+  try {
+    return getAppLanguage()
+  } catch {
+    return null
+  }
 }
 
 export interface PiConnectionSnapshot {
