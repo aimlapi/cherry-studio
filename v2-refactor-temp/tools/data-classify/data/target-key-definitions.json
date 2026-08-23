@@ -761,7 +761,7 @@
       "type": "string",
       "defaultValue": null,
       "status": "classified",
-      "description": "Global default Agent reply language independent of UI (app.language). null means no language constraint is injected (human-readable single-line string when set, e.g. \"English\"); per-Agent configuration.language overrides with undefined=inherit, null=explicit no constraint"
+      "description": "Global default Agent reply language independent of UI (app.language). null means no language constraint is injected (trimmed human-readable string when set, e.g. \"English\"); per-Agent configuration.language overrides with undefined=inherit, null=explicit no constraint"
     }
   ]
 }
