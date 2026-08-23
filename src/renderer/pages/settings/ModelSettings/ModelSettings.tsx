@@ -64,6 +64,8 @@ interface ModelSettingRowProps {
   children: ReactNode
   rowRef?: Ref<HTMLDivElement>
   showFocusGuide?: boolean
+  /** Search anchor id; only passed by the settings-page (non-compact) mount */
+  id?: string
 }
 
 const ModelSettingRow: FC<ModelSettingRowProps> = ({
@@ -73,9 +75,10 @@ const ModelSettingRow: FC<ModelSettingRowProps> = ({
   compact,
   children,
   rowRef,
-  showFocusGuide
+  showFocusGuide,
+  id
 }) => (
-  <div ref={rowRef}>
+  <div ref={rowRef} id={id} className={id ? 'scroll-mt-6' : undefined}>
     <SettingRow className={cn(compact ? 'flex-col items-stretch gap-3 py-1' : 'items-start gap-6 py-1.5')}>
       <div className="min-w-0 flex-1">
         <SettingRowTitle className="gap-2">
@@ -236,6 +239,7 @@ const ModelSettings: FC<ModelSettingsProps> = ({
           )}
           <ModelSettingRow
             compact={compact}
+            id={compact ? undefined : 'setting-model-default-assistant-model'}
             rowRef={defaultRowRef}
             showFocusGuide={focus === 'default' && showFocusGuide}
             icon={<MessageSquareMore size={16} className="lucide-custom shrink-0 text-foreground" />}
@@ -253,6 +257,7 @@ const ModelSettings: FC<ModelSettingsProps> = ({
           {showDividers && <SettingDivider />}
           <ModelSettingRow
             compact={compact}
+            id={compact ? undefined : 'setting-model-quick-model'}
             icon={<Rocket size={16} className="lucide-custom shrink-0 text-foreground" />}
             title={
               <>
@@ -283,6 +288,7 @@ const ModelSettings: FC<ModelSettingsProps> = ({
           {showDividers && <SettingDivider />}
           <ModelSettingRow
             compact={compact}
+            id={compact ? undefined : 'setting-model-translate-model'}
             rowRef={translateRowRef}
             showFocusGuide={focus === 'translate' && showFocusGuide}
             icon={<Languages size={16} className="lucide-custom shrink-0 text-foreground" />}
@@ -321,6 +327,7 @@ const ModelSettings: FC<ModelSettingsProps> = ({
               <SettingDivider />
               <ModelSettingRow
                 compact={compact}
+                id={compact ? undefined : 'setting-model-painting-model'}
                 icon={<Palette size={16} className="lucide-custom shrink-0 text-foreground" />}
                 title={t('settings.models.painting_model')}
                 description={showDescription ? t('settings.models.painting_model_description') : undefined}>
@@ -338,6 +345,7 @@ const ModelSettings: FC<ModelSettingsProps> = ({
           <SettingDivider />
           <ModelSettingRow
             compact={compact}
+            id={compact ? undefined : 'setting-model-retry-enabled'}
             icon={<RefreshCcw size={16} className="lucide-custom shrink-0 text-foreground" />}
             title={
               <>
