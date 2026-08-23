@@ -127,14 +127,21 @@
     {
       "targetKey": "chat.input.toolbar.pinned_tools",
       "type": "string[]",
-      "defaultValue": ["composer:new-conversation", "web-search"],
+      "defaultValue": [
+        "composer:new-conversation",
+        "web-search"
+      ],
       "status": "classified",
       "description": "Ordered tool ids pinned on the chat composer toolbar (v2 new feature, no v1 source)"
     },
     {
       "targetKey": "agent.input.toolbar.pinned_tools",
       "type": "string[]",
-      "defaultValue": ["composer:new-session", "skills", "permission-mode"],
+      "defaultValue": [
+        "composer:new-session",
+        "skills",
+        "permission-mode"
+      ],
       "status": "classified",
       "description": "Ordered tool ids pinned on the agent composer toolbar (v2 new feature, no v1 source)"
     },
@@ -163,11 +170,26 @@
       "targetKey": "ui.sidebar.favorites",
       "type": "PreferenceTypes.SidebarFavoriteItem[]",
       "defaultValue": [
-        { "id": "assistants", "type": "app" },
-        { "id": "agents", "type": "app" },
-        { "id": "translate", "type": "app" },
-        { "id": "paintings", "type": "app" },
-        { "id": "knowledge", "type": "app" }
+        {
+          "id": "assistants",
+          "type": "app"
+        },
+        {
+          "id": "agents",
+          "type": "app"
+        },
+        {
+          "id": "translate",
+          "type": "app"
+        },
+        {
+          "id": "paintings",
+          "type": "app"
+        },
+        {
+          "id": "knowledge",
+          "type": "app"
+        }
       ],
       "status": "classified",
       "description": "Left sidebar favorites, an ordered list of tagged items: built-in apps ({type:'app'}) and mini apps ({type:'mini_app'})"
@@ -724,7 +746,11 @@
       "targetKey": "shortcut.screenshot.capture",
       "type": "PreferenceTypes.PreferenceShortcutType",
       "defaultValue": {
-        "binding": ["CommandOrControl", "Shift", "A"],
+        "binding": [
+          "CommandOrControl",
+          "Shift",
+          "A"
+        ],
         "enabled": true
       },
       "status": "classified",
@@ -733,9 +759,9 @@
     {
       "targetKey": "agent.language",
       "type": "string",
-      "defaultValue": "auto",
+      "defaultValue": null,
       "status": "classified",
-      "description": "Global default Agent reply language independent of UI (app.language); 'auto' means no language constraint is injected. Per-Agent configuration.language overrides this"
+      "description": "Global default Agent reply language independent of UI (app.language). null means no language constraint is injected (human-readable single-line string when set, e.g. \"English\"); per-Agent configuration.language overrides with undefined=inherit, null=explicit no constraint"
     }
   ]
 }

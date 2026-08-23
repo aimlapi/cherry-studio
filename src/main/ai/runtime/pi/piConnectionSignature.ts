@@ -8,9 +8,9 @@ import { mcpServerService } from '@data/services/McpServerService'
 import { modelService } from '@data/services/ModelService'
 import { providerService } from '@data/services/ProviderService'
 import type { McpServerSnapshotMap } from '@main/ai/runtime/agentMcpServers'
+import { resolveEffectiveAgentLanguage } from '@main/ai/utils/agentLanguage'
 import { skillService } from '@main/ai/skills/SkillService'
 import { resolveKnowledgeBaseScope } from '@main/ai/utils/knowledgeScope'
-import { getAppLanguage } from '@main/i18n'
 import type { AgentChannelEntity } from '@shared/data/api/schemas/agentChannels'
 import type { AgentEntity } from '@shared/data/api/schemas/agents'
 import type { AgentSessionEntity } from '@shared/data/api/schemas/agentSessions'
@@ -26,25 +26,6 @@ function stableValue(value: unknown): unknown {
       .sort(([left], [right]) => left.localeCompare(right))
       .map(([key, entry]) => [key, stableValue(entry)])
   )
-}
-
-function resolveEffectiveAgentLanguage(agent: AgentEntity): string | null {
-  const perAgent = agent.configuration?.language
-  if (typeof perAgent === 'string' && perAgent.trim() !== '') {
-    if (perAgent === 'auto') return null
-    return perAgent
-  }
-  try {
-    const global = application.get('PreferenceService').get('agent.language') as unknown as string | null
-    if (typeof global === 'string' && global.trim() !== '' && global !== 'auto') return global
-  } catch {
-    // PreferenceService unavailable in some test harnesses
-  }
-  try {
-    return getAppLanguage()
-  } catch {
-    return null
-  }
 }
 
 export interface PiConnectionSnapshot {
@@ -68,7 +49,10 @@ export class PiInvalidConnectionSnapshotError extends Error {}
  * The effective agent language (per-agent `configuration.language` or global
  * `agent.language` preference) is a rebuild fact: changing it invalidates the
  * warm connection so the new language instruction is baked into the next
- * connection's system prompt and prompt cache.
+ * connection's system prompt and prompt cache. This trades cache preservation
+ * for prompt correctness — the first turn after a language change pays full
+ * input-token cost until the new prefix is cached, but the user sees the new
+ * language on the next reconcile rather than only on the next natural connection.
  */
 export async function capturePiConnectionSnapshot(
   sessionId: string,
