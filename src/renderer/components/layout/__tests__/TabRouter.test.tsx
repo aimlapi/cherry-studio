@@ -284,6 +284,8 @@ describe('TabRouter', () => {
     )
 
     expect(createMemoryHistory).toHaveBeenCalledTimes(1)
-    expect(routerMocks.navigate).toHaveBeenCalledWith({ to: '/app/chat?topicId=current-topic' })
+    // External URL changes split path and query: a query-bearing href string
+    // in `to` loses the search through validateSearch round-trips
+    expect(routerMocks.navigate).toHaveBeenCalledWith({ to: '/app/chat', search: { topicId: 'current-topic' } })
   })
 })
