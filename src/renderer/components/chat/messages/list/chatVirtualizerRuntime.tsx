@@ -143,6 +143,10 @@ export interface ChatVirtualizerRuntime<T> {
   beginScrollbarDrag(): void
   /** Finish a native scrollbar drag and anchor the viewport at its final position. */
   endScrollbarDrag(): void
+  /** Mark Chromium middle-click autoscroll as active so freeze logic yields. */
+  beginAutoscroll(): void
+  /** Clear the autoscroll flag and re-anchor the viewport. */
+  endAutoscroll(): void
 }
 
 const SCROLL_WHEEL_DEBOUNCE_MS = 100
@@ -201,6 +205,7 @@ export function useChatVirtualizerRuntime<T>({
   const lastUserInputDirectionRef = useRef<'up' | 'down' | 'none'>('none')
   const userScrollGestureRef = useRef(false)
   const scrollbarDragActiveRef = useRef(false)
+  const autoscrollActiveRef = useRef(false)
   const readNavigationActiveRef = useRef(false)
   const lastScrollOffsetRef = useRef(0)
   const markUserInput = useCallback(() => {
@@ -208,7 +213,7 @@ export function useChatVirtualizerRuntime<T>({
     lastUserInputDirectionRef.current = 'none'
   }, [])
   const hasRecentUserScrollIntent = useCallback(
-    () => performance.now() - lastUserInputAtRef.current < USER_SCROLL_INPUT_WINDOW_MS,
+    () => autoscrollActiveRef.current || performance.now() - lastUserInputAtRef.current < USER_SCROLL_INPUT_WINDOW_MS,
     []
   )
   const itemsRef = useRef(items)
@@ -350,7 +355,13 @@ export function useChatVirtualizerRuntime<T>({
     const content = contentRef.current
     const handle = vlistHandleRef.current
     if (!frozen || !el || !handle) return
-    if (smoothScroll.isAnimating() || userScrollGestureRef.current || scrollbarDragActiveRef.current) return
+    if (
+      smoothScroll.isAnimating() ||
+      userScrollGestureRef.current ||
+      scrollbarDragActiveRef.current ||
+      autoscrollActiveRef.current
+    )
+      return
 
     const itemIndex = findDataIndexByKey(frozen.itemKey)
     if (itemIndex < 0) {
@@ -443,6 +454,17 @@ export function useChatVirtualizerRuntime<T>({
     settleUserScrollGesture()
   }, [settleUserScrollGesture])
 
+  const beginAutoscroll = useCallback(() => {
+    autoscrollActiveRef.current = true
+    markUserInput()
+  }, [markUserInput])
+
+  const endAutoscroll = useCallback(() => {
+    if (!autoscrollActiveRef.current) return
+    autoscrollActiveRef.current = false
+    settleUserScrollGesture()
+  }, [settleUserScrollGesture])
+
   const enterFollowingMode = useCallback(
     (reason: FollowingReason) => {
       viewportFollow.enterFollowing(reason)
@@ -532,7 +554,8 @@ export function useChatVirtualizerRuntime<T>({
     if (!content || typeof ResizeObserver === 'undefined') return
     const observer = new ResizeObserver(() => {
       const isReading = !viewportFollow.isFollowing()
-      const shouldHoldRestingViewport = isReading && !userScrollGestureRef.current && !scrollbarDragActiveRef.current
+      const shouldHoldRestingViewport =
+        isReading && !userScrollGestureRef.current && !scrollbarDragActiveRef.current && !autoscrollActiveRef.current
       if (shouldHoldRestingViewport) {
         // Restore range from the currently committed DOM before re-asserting
         // scrollTop. Disclosure collapse may already have let the browser clamp
@@ -643,8 +666,13 @@ export function useChatVirtualizerRuntime<T>({
     const inputDirectionMatchesScroll =
       recentInputDirection === 'none' || delta === 0 || (recentInputDirection === 'up' ? delta < 0 : delta > 0)
     const hasRecentUserScrollIntent =
-      performance.now() - lastUserInputAtRef.current < USER_SCROLL_INPUT_WINDOW_MS && inputDirectionMatchesScroll
-    const isUserInitiated = scrollbarDragActiveRef.current || userScrollGestureRef.current || hasRecentUserScrollIntent
+      autoscrollActiveRef.current ||
+      (performance.now() - lastUserInputAtRef.current < USER_SCROLL_INPUT_WINDOW_MS && inputDirectionMatchesScroll)
+    const isUserInitiated =
+      scrollbarDragActiveRef.current ||
+      autoscrollActiveRef.current ||
+      userScrollGestureRef.current ||
+      hasRecentUserScrollIntent
     const wheelDir = lastWheelDirRef.current
     const direction: 'up' | 'down' | 'none' =
       wheelDir !== 'none' ? wheelDir : delta < 0 ? 'up' : delta > 0 ? 'down' : 'none'
@@ -966,7 +994,9 @@ export function useChatVirtualizerRuntime<T>({
     markUserInput,
     hasRecentUserScrollIntent,
     beginScrollbarDrag,
-    endScrollbarDrag
+    endScrollbarDrag,
+    beginAutoscroll,
+    endAutoscroll
   }
 }
 
