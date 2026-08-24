@@ -10,7 +10,6 @@ const mocks = vi.hoisted(() => ({
   getByProviderId: vi.fn(),
   getByKey: vi.fn(),
   resolveApiGatewayRuntime: vi.fn(),
-  resolveCherryCloudGatewayRuntime: vi.fn(),
   getCurrentConfig: vi.fn(),
   ApiGatewayNotRunningError: class ApiGatewayNotRunningError extends Error {}
 }))
@@ -25,8 +24,7 @@ vi.mock('@data/services/ProviderService', () => ({
 vi.mock('@data/services/ModelService', () => ({ modelService: { getByKey: mocks.getByKey } }))
 vi.mock('@main/ai/runtime/agentApiGateway', () => ({
   ApiGatewayNotRunningError: mocks.ApiGatewayNotRunningError,
-  resolveApiGatewayRuntime: mocks.resolveApiGatewayRuntime,
-  resolveCherryCloudGatewayRuntime: mocks.resolveCherryCloudGatewayRuntime
+  resolveApiGatewayRuntime: mocks.resolveApiGatewayRuntime
 }))
 vi.mock('@application', () => ({
   application: {
@@ -119,7 +117,6 @@ function makeCloudModel(overrides: Partial<Model> = {}): Model {
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.resolveApiGatewayRuntime.mockResolvedValue(GATEWAY)
-  mocks.resolveCherryCloudGatewayRuntime.mockResolvedValue(GATEWAY)
   mocks.resolveApiKey.mockReturnValue({ value: 'sk-native', apiKeySelection: { attribution: 'unknown' } })
 })
 
@@ -217,25 +214,25 @@ describe('resolveDshProviderInjectionFromSnapshot', () => {
     expect(injection.usageCapture).toEqual({ owner: 'provider-calls' })
   })
 
-  it('acquires the signed Cloud gateway even when the persistent gateway setting is disabled', async () => {
+  it('routes Cloud through the same consented gateway runtime', async () => {
     const injection = await resolveDshProviderInjectionFromSnapshot('session-1', cloudProvider, makeCloudModel())
 
-    expect(mocks.resolveCherryCloudGatewayRuntime).toHaveBeenCalledWith('session-1')
+    expect(mocks.resolveApiGatewayRuntime).toHaveBeenCalledWith('session-1')
     expect(mocks.resolveApiKey).not.toHaveBeenCalled()
     expect(injection).toMatchObject({ api: 'anthropic-messages', modelId: 'cherryai:deepseek-free' })
   })
 
-  it('propagates the disabled-gateway consent error', async () => {
+  it('propagates the disabled-gateway consent error for Cloud', async () => {
     mocks.resolveApiGatewayRuntime.mockRejectedValue(new mocks.ApiGatewayNotRunningError())
 
-    await expect(resolveDshProviderInjectionFromSnapshot('session-1', vertexProvider, makeModel())).rejects.toThrow(
+    await expect(resolveDshProviderInjectionFromSnapshot('session-1', cloudProvider, makeCloudModel())).rejects.toThrow(
       mocks.ApiGatewayNotRunningError
     )
   })
 })
 
 describe('assertDshProviderUsable', () => {
-  it('accepts a Cherry Cloud model without a provider key or persistent gateway consent', async () => {
+  it('defers Cherry Cloud gateway consent until connection materialization', async () => {
     mocks.getByProviderId.mockResolvedValue(cloudProvider)
     mocks.getByKey.mockResolvedValue(makeCloudModel())
     mocks.getCurrentConfig.mockReturnValue({ enabled: false })

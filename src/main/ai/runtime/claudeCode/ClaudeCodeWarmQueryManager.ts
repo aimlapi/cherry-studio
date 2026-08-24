@@ -26,7 +26,7 @@ export interface WarmQueryRequest {
   key: string
   options: Options
   initializeTimeoutMs?: number
-  /** Spawn-frozen connection identity, including the active Cherry Cloud Session generation. */
+  /** Spawn-frozen connection identity used to reject stale warm processes. */
   connectionRebuildSignature?: string
   /**
    * Rotation-insensitive identity of the auth/header material the options were built with (e.g. a

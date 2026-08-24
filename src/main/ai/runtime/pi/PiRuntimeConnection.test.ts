@@ -34,6 +34,7 @@ interface FakeSpan {
 const mocks = vi.hoisted(() => ({
   getById: vi.fn(),
   getAgent: vi.fn(),
+  broadcast: vi.fn(),
   skillList: vi.fn(),
   getSkillDirectory: vi.fn(),
   resolveInjection: vi.fn(),
@@ -98,8 +99,11 @@ vi.mock('@logger', () => ({
 vi.mock('@application', () => ({
   application: {
     getPath: mocks.getPath,
-    get: (name: string) =>
-      name === 'AgentSessionRuntimeService' ? { getInteractionState: mocks.getInteractionState } : {}
+    get: (name: string) => {
+      if (name === 'AgentSessionRuntimeService') return { getInteractionState: mocks.getInteractionState }
+      if (name === 'IpcApiService') return { broadcast: mocks.broadcast }
+      return {}
+    }
   }
 }))
 vi.mock('@data/services/AgentSessionService', () => ({ agentSessionService: { getById: mocks.getById } }))
@@ -156,6 +160,7 @@ vi.mock('@main/utils/rtk', () => ({ rtkRewrite: vi.fn().mockResolvedValue(null) 
 vi.spyOn(trace, 'getTracer').mockReturnValue({ startSpan: mocks.startSpan } as never)
 
 const { PiRuntimeConnection } = await import('./PiRuntimeConnection')
+const { ApiGatewayNotRunningError } = await import('../agentApiGateway')
 const { REPORT_ARTIFACTS_PROMPT } = await import('../agentPrompt')
 const { toolApprovalRegistry } = await import('@main/ai/toolApproval/ToolApprovalRegistry')
 
@@ -396,6 +401,13 @@ afterEach(() => {
 })
 
 describe('PiRuntimeConnection', () => {
+  it('prompts the current Agent session when its gateway route is disabled', async () => {
+    mocks.resolveInjection.mockRejectedValueOnce(new ApiGatewayNotRunningError())
+
+    await expect(new PiRuntimeConnection(input).start()).rejects.toBeInstanceOf(ApiGatewayNotRunningError)
+    expect(mocks.broadcast).toHaveBeenCalledWith('api_gateway.required', { sessionId: SESSION_ID })
+  })
+
   it('forces Cherry-owned pi dirs and creates a fresh session (no resume)', async () => {
     await new PiRuntimeConnection(input).start()
 

@@ -12,13 +12,14 @@ import { API_GATEWAY_REQUIRED_I18N_KEY } from '@shared/types/apiGateway'
  * Read-only gateway connection identity for route derivation and connection signatures.
  * Read-only by contract — snapshot capture must never generate or persist a key.
  */
-export function readApiGatewayConnectionSnapshot(): { baseUrl: string; fingerprint: string } {
+export function readApiGatewayConnectionSnapshot(): { baseUrl: string; enabled: boolean; fingerprint: string } {
   const apiGatewayService = application.get('ApiGatewayService')
   const config = apiGatewayService.getCurrentConfig()
   const gatewayKey = application.get('PreferenceService').get('feature.api_gateway.api_key')
   const baseUrl = `http://${config.host || '127.0.0.1'}:${config.port || 23333}`
   return {
     baseUrl,
+    enabled: config.enabled,
     fingerprint: createHash('sha256')
       .update(
         JSON.stringify({
@@ -47,10 +48,7 @@ export class ApiGatewayNotRunningError extends Error {
 }
 
 /** Consent, convergence, and key sequence in one place — every gateway route resolves through here. */
-export async function resolveApiGatewayRuntime(
-  sessionId: string,
-  { allowDisabled = false }: { allowDisabled?: boolean } = {}
-): Promise<{
+export async function resolveApiGatewayRuntime(sessionId: string): Promise<{
   baseUrl: string
   apiKey: string
   connectionFingerprint: string
@@ -62,14 +60,11 @@ export async function resolveApiGatewayRuntime(
   // Ask for consent on the PERSISTED intent, never on `isRunning()`: the gateway is also briefly
   // down while binding at boot, mid-restart, or after a failed activation, and prompting the user
   // to enable a service they already enabled would be nonsense.
-  if (!config.enabled && !allowDisabled) throw new ApiGatewayNotRunningError()
+  if (!config.enabled) throw new ApiGatewayNotRunningError()
   // Consent already given, so converging is not an implicit start. `ensureRunning()` goes through
   // the same reconciler (serializing behind an in-flight transition) and throws the real bind
   // error; unlike `start()` it cannot re-persist an intent, so it can never re-enable the gateway.
-  if (!apiGatewayService.isRunning()) {
-    if (allowDisabled) throw new Error('The leased API Gateway is not running')
-    await apiGatewayService.ensureRunning()
-  }
+  if (!apiGatewayService.isRunning()) await apiGatewayService.ensureRunning()
   // Only after the checks above: this persists a freshly generated key on first use, and a failing
   // route must not leave that side effect behind.
   const apiKey = await apiGatewayService.ensureValidApiKey()
@@ -81,9 +76,4 @@ export async function resolveApiGatewayRuntime(
     usageHeaders: apiGatewayService.getAgentSessionUsageHeaders(sessionId),
     internalRequestToken: apiGatewayService.getInternalRequestToken()
   }
-}
-
-export async function resolveCherryCloudGatewayRuntime(sessionId: string) {
-  await application.get('CherryCloudService').ensureAgentGateway()
-  return resolveApiGatewayRuntime(sessionId, { allowDisabled: true })
 }

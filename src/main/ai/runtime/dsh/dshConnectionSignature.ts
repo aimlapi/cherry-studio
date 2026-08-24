@@ -87,11 +87,9 @@ export async function captureDshConnectionSnapshot(
   const apiKeys = providerService.getApiKeys(parsed.providerId, { enabled: true })
   const configuration = { ...agent.configuration, permission_mode: undefined }
   const usesCherryCloud = isCherryCloudWorkModel(model.providerId, model.group)
-  const cherryCloudSessionGeneration = usesCherryCloud
-    ? await application.get('CherryCloudService').getSessionGeneration()
-    : null
-  const gatewayConnectionFingerprint =
-    usesCherryCloud || resolveDshInjectionApi(provider, model) === undefined
+  const gatewayConnectionFingerprint = usesCherryCloud
+    ? `enabled:${readApiGatewayConnectionSnapshot().enabled}`
+    : resolveDshInjectionApi(provider, model) === undefined
       ? readApiGatewayConnectionSnapshot().fingerprint
       : null
 
@@ -111,7 +109,6 @@ export async function captureDshConnectionSnapshot(
           mcpTools,
           linkedChannelId: linkedChannel?.id ?? null,
           knowledgeBaseIds: resolveKnowledgeBaseScope(agent.knowledgeBaseIds, selectedKnowledgeBaseIds),
-          cherryCloudSessionGeneration,
           gatewayConnectionFingerprint
         })
       )

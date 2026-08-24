@@ -25,8 +25,6 @@ const mocks = vi.hoisted(() => ({
   apiGatewayGetCurrentConfig: vi.fn(),
   apiGatewayGetAgentSessionUsageHeaders: vi.fn(),
   apiGatewayGetInternalRequestToken: vi.fn(),
-  ensureCherryCloudGateway: vi.fn(),
-  getCherryCloudSessionGeneration: vi.fn(),
   resolveReasoningProfile: vi.fn(),
   getAppLanguage: vi.fn(),
   getProxyEnvironment: vi.fn(),
@@ -85,12 +83,6 @@ vi.mock('@application', () => ({
       }
       if (name === 'PreferenceService') {
         return { get: mocks.preferenceGet }
-      }
-      if (name === 'CherryCloudService') {
-        return {
-          ensureAgentGateway: mocks.ensureCherryCloudGateway,
-          getSessionGeneration: mocks.getCherryCloudSessionGeneration
-        }
       }
       throw new Error(`Unexpected application.get(${name})`)
     })
@@ -188,8 +180,6 @@ describe('buildClaudeCodeQueryRequestForAgentSession resume-token precedence', (
     mocks.getProxyEnvironment.mockReturnValue({})
     mocks.getClaudeCodeLoginShellEnvironment.mockResolvedValue({})
     mocks.apiGatewayGetInternalRequestToken.mockReturnValue('internal-request-token')
-    mocks.ensureCherryCloudGateway.mockResolvedValue(undefined)
-    mocks.getCherryCloudSessionGeneration.mockResolvedValue(0)
     // settingsBuilder receives `lastAgentSessionId` and reflects it as `resume`;
     // mirror that so the builder's own precedence is what the test exercises.
     mocks.buildSessionSettings.mockImplementation(async (_session, _provider, options) => ({
@@ -689,23 +679,50 @@ describe('buildClaudeCodeQueryRequestForAgentSession resume-token precedence', (
     })
     mocks.getLastRuntimeResumeToken.mockReturnValue(null)
     mocks.apiGatewayGetCurrentConfig.mockReturnValue({
-      enabled: false,
+      enabled: true,
       host: '127.0.0.1',
       port: 23333,
       apiKey: 'gateway-key'
     })
     mocks.apiGatewayIsRunning.mockReturnValue(false)
-    mocks.ensureCherryCloudGateway.mockImplementation(async () => mocks.apiGatewayIsRunning.mockReturnValue(true))
+    mocks.apiGatewayEnsureRunning.mockImplementation(async () => mocks.apiGatewayIsRunning.mockReturnValue(true))
 
     const request = await buildClaudeCodeQueryRequestForAgentSession('session-1')
+    const current = await deriveConnectionConfig('session-1')
 
+    if (!current.ok) throw new Error('expected ok derive')
     expect(mocks.apiGatewayEnsureKey).toHaveBeenCalled()
-    expect(mocks.ensureCherryCloudGateway).toHaveBeenCalledOnce()
+    expect(mocks.apiGatewayEnsureRunning).toHaveBeenCalledOnce()
+    expect(request?.connectionConfig.rebuildSignature).toBe(current.config.rebuildSignature)
     expect(request?.settings.env).toMatchObject({
       ANTHROPIC_BASE_URL: 'http://127.0.0.1:23333',
       ANTHROPIC_MODEL: `${CHERRYAI_PROVIDER_ID}:deepseek-free`
     })
     expect(mocks.resolveApiKey).not.toHaveBeenCalled()
+  })
+
+  it('requires gateway consent for Cherry Cloud Work models', async () => {
+    mocks.getAgent.mockReturnValue({ id: 'agent-1', model: `${CHERRYAI_PROVIDER_ID}::deepseek-free` })
+    mocks.getProviderByProviderId.mockReturnValue({
+      id: CHERRYAI_PROVIDER_ID,
+      endpointConfigs: {
+        [ENDPOINT_TYPE.ANTHROPIC_MESSAGES]: { baseUrl: 'https://cloud.example/v1' }
+      }
+    })
+    mocks.getModelByKey.mockReturnValue({
+      id: 'deepseek-free',
+      apiModelId: 'deepseek-free',
+      group: CHERRY_CLOUD_MODEL_GROUP,
+      endpointTypes: [ENDPOINT_TYPE.ANTHROPIC_MESSAGES]
+    })
+    mocks.apiGatewayGetCurrentConfig.mockReturnValue({ enabled: false, host: '127.0.0.1', port: 23333 })
+    mocks.apiGatewayIsRunning.mockReturnValue(false)
+
+    await expect(buildClaudeCodeQueryRequestForAgentSession('session-1')).rejects.toBeInstanceOf(
+      ApiGatewayNotRunningError
+    )
+    expect(mocks.apiGatewayEnsureRunning).not.toHaveBeenCalled()
+    expect(mocks.apiGatewayEnsureKey).not.toHaveBeenCalled()
   })
 
   it('routes a declared Anthropic model through the gateway when the provider configures no Messages base URL', async () => {
@@ -1161,7 +1178,6 @@ describe('deriveConnectionConfig', () => {
     mocks.getAppLanguage.mockReturnValue('en-US')
     mocks.getProxyEnvironment.mockReturnValue({})
     mocks.getClaudeCodeLoginShellEnvironment.mockResolvedValue({})
-    mocks.getCherryCloudSessionGeneration.mockResolvedValue(0)
   })
 
   async function deriveSignature() {
@@ -1208,37 +1224,6 @@ describe('deriveConnectionConfig', () => {
 
     expect(second.rebuildSignature).toBe(first.rebuildSignature)
     expect(second.rebuildFactFingerprints).toEqual(first.rebuildFactFingerprints)
-  })
-
-  it('changes the rebuild signature when the Cherry Cloud Session changes', async () => {
-    mocks.getAgent.mockReturnValue({
-      id: 'agent-1',
-      model: `${CHERRYAI_PROVIDER_ID}::deepseek-free`,
-      disabledTools: [],
-      mcps: [],
-      configuration: {}
-    })
-    mocks.getProviderByProviderId.mockReturnValue({
-      id: CHERRYAI_PROVIDER_ID,
-      endpointConfigs: { [ENDPOINT_TYPE.ANTHROPIC_MESSAGES]: { baseUrl: 'https://cloud.example/v1' } }
-    })
-    mocks.getModelByKey.mockReturnValue({
-      id: 'deepseek-free',
-      apiModelId: 'deepseek-free',
-      group: CHERRY_CLOUD_MODEL_GROUP,
-      endpointTypes: [ENDPOINT_TYPE.ANTHROPIC_MESSAGES]
-    })
-    mocks.getCherryCloudSessionGeneration.mockResolvedValueOnce(1).mockResolvedValueOnce(2)
-
-    const first = await deriveSignature()
-    const second = await deriveSignature()
-
-    expect(second.rebuildSignature).not.toBe(first.rebuildSignature)
-    expect(
-      Object.keys(first.rebuildFactFingerprints).filter(
-        (name) => first.rebuildFactFingerprints[name] !== second.rebuildFactFingerprints[name]
-      )
-    ).toEqual(['cherryCloudSessionGeneration'])
   })
 
   it('does not rebuild when only the usage pricing capture time changes', async () => {

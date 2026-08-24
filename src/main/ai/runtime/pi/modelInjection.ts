@@ -37,7 +37,7 @@ import { isLoginBasedProvider, resolveEndpointDialect } from '@shared/utils/prov
 
 import { resolveEffectiveEndpoint } from '../../provider/endpoint'
 import { getProviderTransportAdapter, type ProviderTransportAdapter } from '../../provider/runtimeTransport'
-import { resolveCherryCloudGatewayRuntime } from '../agentApiGateway'
+import { resolveApiGatewayRuntime } from '../agentApiGateway'
 import type { AgentSessionUsageCapture } from '../types'
 import { loadPiAnthropicMessagesApi, loadPiApiStreamSimple } from './piSdk'
 import { withCherryInThinkingReplay } from './piThinkingReplay'
@@ -324,7 +324,7 @@ export async function resolvePiProviderInjectionForSession(
     return resolvePiProviderInjectionFromSnapshot(provider, model, enabledApiKeys)
   }
 
-  const gateway = await resolveCherryCloudGatewayRuntime(sessionId)
+  const gateway = await resolveApiGatewayRuntime(sessionId)
   return buildPiCloudGatewayInjection(provider, model, gateway)
 }
 
@@ -340,9 +340,8 @@ export async function assertPiProviderUsable(uniqueModelId: UniqueModelId): Prom
     modelService.getByKey(providerId, modelId)
   ])
 
-  // Cloud authentication is the Product Session, not a provider API key. The
-  // connection materializer validates it while acquiring the temporary gateway
-  // lease; model metadata still has to be complete for pi compaction.
+  // Cloud authentication is the Product Session, not a provider API key.
+  // Gateway consent is checked during materialization; pi still needs complete model metadata.
   if (isCherryCloudWorkModel(model.providerId, model.group)) {
     if (!hasKnownPiContextWindow(model)) throw new PiMissingContextWindowError(model.id)
     return

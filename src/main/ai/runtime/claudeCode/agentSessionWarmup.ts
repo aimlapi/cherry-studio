@@ -39,11 +39,7 @@ import {
 
 import { resolveEffectiveEndpoint } from '../../provider/endpoint'
 import { getExtraHeaders } from '../../utils/provider'
-import {
-  readApiGatewayConnectionSnapshot,
-  resolveApiGatewayRuntime,
-  resolveCherryCloudGatewayRuntime
-} from '../agentApiGateway'
+import { readApiGatewayConnectionSnapshot, resolveApiGatewayRuntime } from '../agentApiGateway'
 import type { AgentSessionUsageCapture } from '../types'
 import {
   createAgentProxyEnvironmentFingerprint,
@@ -377,8 +373,6 @@ async function deriveConnectionConfigFromSnapshot(
     : (agentChannelService.findBySessionId(session.id)?.id ?? null)
   const proxyEnvironmentFingerprint =
     materialized?.proxyEnvironmentFingerprint ?? (await deriveAgentProxyEnvironmentFingerprint(agent, routeFacts))
-  const cherryCloudSessionGeneration =
-    routeFacts.branch === 'cherry-cloud' ? await application.get('CherryCloudService').getSessionGeneration() : null
   const rebuildFacts = {
     modelId: uniqueModelId,
     contextWindow,
@@ -386,7 +380,6 @@ async function deriveConnectionConfigFromSnapshot(
     reasoningEffort,
     fastMode: effectiveFastMode,
     route: buildRebuildRouteFacts(routeFacts),
-    cherryCloudSessionGeneration,
     cwd,
     language: getAppLanguage(),
     instructions: agent.instructions ?? null,
@@ -699,7 +692,7 @@ function deriveRouteFacts(
     return {
       branch: usesCherryCloud ? 'cherry-cloud' : 'gateway',
       baseUrl: gateway.baseUrl,
-      credentialsFingerprint: gateway.fingerprint,
+      credentialsFingerprint: usesCherryCloud ? `cherry-cloud-gateway-enabled:${gateway.enabled}` : gateway.fingerprint,
       toolSearchCompatible,
       modelIds: {
         primary: toGatewayModelId(primaryRef),
@@ -773,10 +766,7 @@ async function resolveClaudeCodeRuntimeRoute(
       }
     case 'cherry-cloud':
     case 'gateway': {
-      const gateway =
-        facts.branch === 'cherry-cloud'
-          ? await resolveCherryCloudGatewayRuntime(sessionId)
-          : await resolveApiGatewayRuntime(sessionId)
+      const gateway = await resolveApiGatewayRuntime(sessionId)
       return {
         ...facts,
         baseUrl: gateway.baseUrl,
@@ -784,7 +774,8 @@ async function resolveClaudeCodeRuntimeRoute(
         customHeaders: gateway.usageHeaders,
         usageCapture: { owner: 'provider-calls' },
         internalRequestToken: gateway.internalRequestToken,
-        credentialsFingerprint: gateway.connectionFingerprint
+        credentialsFingerprint:
+          facts.branch === 'cherry-cloud' ? facts.credentialsFingerprint : gateway.connectionFingerprint
       }
     }
     case 'direct': {

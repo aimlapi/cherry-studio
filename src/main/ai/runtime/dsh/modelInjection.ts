@@ -32,11 +32,7 @@ import { getRawModelId, isGatewayRoutableModel, isReasoningModel, isVisionModel 
 import { isLoginBasedProvider } from '@shared/utils/provider'
 
 import { resolveEffectiveEndpoint } from '../../provider/endpoint'
-import {
-  ApiGatewayNotRunningError,
-  resolveApiGatewayRuntime,
-  resolveCherryCloudGatewayRuntime
-} from '../agentApiGateway'
+import { ApiGatewayNotRunningError, resolveApiGatewayRuntime } from '../agentApiGateway'
 import type { AgentSessionUsageCapture } from '../types'
 
 // dsh-llm-pi-ai uses maxTokens as a per-request output cap. Keep pi's
@@ -331,7 +327,7 @@ export async function resolveDshProviderInjectionFromSnapshot(
   reasoningEffort: ReasoningEffortOption = 'default'
 ): Promise<DshProviderInjection> {
   if (isCherryCloudWorkModel(model.providerId, model.group)) {
-    const gateway = await resolveCherryCloudGatewayRuntime(sessionId)
+    const gateway = await resolveApiGatewayRuntime(sessionId)
     return buildDshGatewayInjection(provider, model, gateway, reasoningEffort)
   }
 
@@ -366,9 +362,8 @@ export async function assertDshProviderUsable(uniqueModelId: UniqueModelId): Pro
     modelService.getByKey(providerId, modelId)
   ])
 
-  // Cloud uses the Product Session and device signature rather than a provider
-  // key. The connection materializer validates that session and starts the
-  // temporary local gateway lease.
+  // Cloud uses the Product Session and device signature rather than a provider key.
+  // Gateway consent is checked when the connection is materialized.
   if (isCherryCloudWorkModel(model.providerId, model.group)) {
     if (!hasDshTextInput(model)) throw new DshUnsupportedModelInputError(model.id)
     if (!hasKnownDshContextWindow(model)) throw new DshMissingContextWindowError(model.id)
