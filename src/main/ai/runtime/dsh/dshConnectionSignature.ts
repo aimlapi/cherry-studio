@@ -65,10 +65,11 @@ export async function captureDshConnectionSnapshot(
 
   const modelId = requestedModelId ?? agent.model
   const parsed = parseUniqueModelId(modelId)
-  const [provider, model, skills] = await Promise.all([
+  const [provider, model, skills, workspaceSkillPaths] = await Promise.all([
     providerService.getByProviderId(parsed.providerId),
     modelService.getByKey(parsed.providerId, parsed.modelId),
-    skillService.list({ agentId: agent.id })
+    skillService.list({ agentId: agent.id }),
+    skillService.listLocalSkillPaths(session.workspace.path)
   ])
   const enabledSkills = skills.filter((skill) => skill.isEnabled)
   const mcpServerSnapshots = new Map<string, ReturnType<typeof mcpServerService.findByIdOrName>>()
@@ -105,6 +106,7 @@ export async function captureDshConnectionSnapshot(
           model,
           apiKeys,
           enabledSkills,
+          workspaceSkillPaths,
           mcpServers,
           mcpTools,
           linkedChannelId: linkedChannel?.id ?? null,
@@ -122,7 +124,10 @@ export async function captureDshConnectionSnapshot(
     provider,
     model,
     enabledApiKeys: apiKeys,
-    additionalSkillPaths: enabledSkills.map((skill) => skillService.getSkillDirectory(skill.folderName)),
+    additionalSkillPaths: [
+      ...enabledSkills.map((skill) => skillService.getSkillDirectory(skill.folderName)),
+      ...workspaceSkillPaths
+    ],
     mcpServerSnapshots,
     linkedChannel: linkedChannel ? { id: linkedChannel.id } : null,
     signature
