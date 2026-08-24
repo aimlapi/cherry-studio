@@ -11,10 +11,16 @@ const mocks = vi.hoisted(() => ({
   getSkillDirectory: vi.fn(),
   findMcp: vi.fn(),
   listTools: vi.fn(),
-  findBySessionId: vi.fn()
+  findBySessionId: vi.fn(),
+  preferenceGet: vi.fn()
 }))
 
-vi.mock('@application', () => ({ application: { get: () => ({ listTools: mocks.listTools }) } }))
+vi.mock('@application', () => ({
+  application: {
+    get: (name: string) =>
+      name === 'PreferenceService' ? { get: mocks.preferenceGet } : { listTools: mocks.listTools }
+  }
+}))
 vi.mock('@data/services/AgentSessionService', () => ({ agentSessionService: { getById: mocks.getSession } }))
 vi.mock('@data/services/AgentService', () => ({ agentService: { getAgent: mocks.getAgent } }))
 vi.mock('@data/services/ProviderService', () => ({
@@ -59,6 +65,7 @@ beforeEach(() => {
   mocks.findMcp.mockReturnValue({ id: 'mcp-1', name: 'server', updatedAt: 1 })
   mocks.listTools.mockReturnValue([{ name: 'search', inputSchema: { type: 'object' } }])
   mocks.findBySessionId.mockReturnValue(null)
+  mocks.preferenceGet.mockReturnValue(null)
 })
 
 describe('captureDshConnectionSnapshot', () => {
@@ -94,7 +101,10 @@ describe('captureDshConnectionSnapshot', () => {
         mocks.getAgent.mockReturnValueOnce({
           ...agent,
           configuration: { ...agent.configuration, language: 'Thai' }
-        })
+        }),
+      // Rebuild fact via the global preference alone: the Agent is unchanged, only
+      // `agent.language` moves — this input is not hashed through agent.configuration.
+      () => mocks.preferenceGet.mockReturnValueOnce('English')
     ]
 
     for (const mutate of mutations) {

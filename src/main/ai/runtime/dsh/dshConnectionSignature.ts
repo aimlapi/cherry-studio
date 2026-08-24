@@ -11,7 +11,7 @@ import { gatewayCredentialsFingerprint } from '@main/ai/runtime/agentApiGateway'
 import type { McpServerSnapshotMap } from '@main/ai/runtime/agentMcpServers'
 import { resolveDshInjectionApi } from '@main/ai/runtime/dsh/modelInjection'
 import { skillService } from '@main/ai/skills/SkillService'
-import { resolveEffectiveAgentLanguage } from '@main/ai/utils/agentLanguage'
+import { getEffectiveAgentLanguage } from '@main/ai/utils/agentLanguage'
 import { resolveKnowledgeBaseScope } from '@main/ai/utils/knowledgeScope'
 import type { AgentChannelEntity } from '@shared/data/api/schemas/agentChannels'
 import type { AgentEntity } from '@shared/data/api/schemas/agents'
@@ -107,7 +107,7 @@ export async function captureDshConnectionSnapshot(
           mcpTools,
           linkedChannelId: linkedChannel?.id ?? null,
           knowledgeBaseIds: resolveKnowledgeBaseScope(agent.knowledgeBaseIds, selectedKnowledgeBaseIds),
-          effectiveLanguage: resolveEffectiveAgentLanguage(agent),
+          effectiveLanguage: getEffectiveAgentLanguage(agent),
           // Gateway routes pin their auth identity so a key edit or enable/running flip rebuilds
           // the warm connection (claude's credentialsFingerprint parity); null on native routes.
           gatewayCredentials:

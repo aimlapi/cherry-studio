@@ -9,7 +9,7 @@ import { modelService } from '@data/services/ModelService'
 import { providerService } from '@data/services/ProviderService'
 import type { McpServerSnapshotMap } from '@main/ai/runtime/agentMcpServers'
 import { skillService } from '@main/ai/skills/SkillService'
-import { resolveEffectiveAgentLanguage } from '@main/ai/utils/agentLanguage'
+import { getEffectiveAgentLanguage } from '@main/ai/utils/agentLanguage'
 import { resolveKnowledgeBaseScope } from '@main/ai/utils/knowledgeScope'
 import type { AgentChannelEntity } from '@shared/data/api/schemas/agentChannels'
 import type { AgentEntity } from '@shared/data/api/schemas/agents'
@@ -104,7 +104,7 @@ export async function capturePiConnectionSnapshot(
           mcpTools,
           linkedChannelId: linkedChannel?.id ?? null,
           knowledgeBaseIds: resolveKnowledgeBaseScope(agent.knowledgeBaseIds, selectedKnowledgeBaseIds),
-          effectiveLanguage: resolveEffectiveAgentLanguage(agent)
+          effectiveLanguage: getEffectiveAgentLanguage(agent)
         })
       )
     )
