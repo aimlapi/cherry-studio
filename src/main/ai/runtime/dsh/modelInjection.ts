@@ -22,7 +22,7 @@ import {
   mapEndpointToDshApi,
   resolveDshEndpointType
 } from '@shared/ai/dshModelCompatibility'
-import { isCherryCloudWorkModel } from '@shared/data/presets/cherryai'
+import { isManagedCherryCloudModel } from '@shared/data/presets/cherryai'
 import { type Model, parseUniqueModelId, type UniqueModelId } from '@shared/data/types/model'
 import type { ApiKeyEntry, Provider } from '@shared/data/types/provider'
 import type { ReasoningEffortOption } from '@shared/types/aiSdk'
@@ -274,7 +274,7 @@ export function buildDshGatewayInjection(
 ): DshProviderInjection {
   if (!isGatewayRoutableModel(model)) throw new DshUnsupportedProviderError(provider.id)
   if (!hasDshTextInput(model)) throw new DshUnsupportedModelInputError(model.id)
-  const isCherryCloud = isCherryCloudWorkModel(model.providerId, model.group)
+  const isCherryCloud = isManagedCherryCloudModel(model.providerId, model.group)
   if (!hasKnownDshContextWindow(model)) throw new DshMissingContextWindowError(model.id)
 
   const modelId = formatGatewayModelId(provider.id, getRawModelId(model))
@@ -326,7 +326,7 @@ export async function resolveDshProviderInjectionFromSnapshot(
   enabledApiKeys?: readonly ApiKeyEntry[],
   reasoningEffort: ReasoningEffortOption = 'default'
 ): Promise<DshProviderInjection> {
-  if (isCherryCloudWorkModel(model.providerId, model.group)) {
+  if (isManagedCherryCloudModel(model.providerId, model.group)) {
     const gateway = await resolveApiGatewayRuntime(sessionId)
     return buildDshGatewayInjection(provider, model, gateway, reasoningEffort)
   }
@@ -364,7 +364,7 @@ export async function assertDshProviderUsable(uniqueModelId: UniqueModelId): Pro
 
   // Cloud uses the Product Session and device signature rather than a provider key.
   // Gateway consent is checked when the connection is materialized.
-  if (isCherryCloudWorkModel(model.providerId, model.group)) {
+  if (isManagedCherryCloudModel(model.providerId, model.group)) {
     if (!hasDshTextInput(model)) throw new DshUnsupportedModelInputError(model.id)
     if (!hasKnownDshContextWindow(model)) throw new DshMissingContextWindowError(model.id)
     return

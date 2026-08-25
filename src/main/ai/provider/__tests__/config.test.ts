@@ -1,4 +1,5 @@
 import {
+  CHERRY_CLOUD_MODEL_GROUP,
   CHERRYAI_API_BASE_URL,
   CHERRYAI_DEFAULT_MODEL_ID,
   CHERRYAI_DEFAULT_MODEL_NAME,
@@ -28,7 +29,8 @@ const { resolveApiKeyMock, getAuthConfigMock, getByProviderIdMock } = vi.hoisted
   getAuthConfigMock: vi.fn<(providerId: string) => AuthConfig | null>(),
   getByProviderIdMock: vi.fn()
 }))
-const { generateSignatureMock } = vi.hoisted(() => ({
+const { buildCherryCloudProviderConfigMock, generateSignatureMock } = vi.hoisted(() => ({
+  buildCherryCloudProviderConfigMock: vi.fn(),
   generateSignatureMock: vi.fn()
 }))
 
@@ -44,6 +46,10 @@ vi.mock('@main/ai/provider/cherryai', () => ({
   generateSignature: generateSignatureMock
 }))
 
+vi.mock('@main/ai/provider/cherryCloud', () => ({
+  buildCherryCloudProviderConfig: buildCherryCloudProviderConfigMock
+}))
+
 // Import the SUT after the mock is declared.
 const { providerToAiSdkConfig, resolveProviderAiSdkConfig } = await import('../config')
 
@@ -56,6 +62,10 @@ beforeEach(() => {
       : { attribution: 'explicit', id: 'test-key', masked: 'sk-t****-key' }
   }))
   getAuthConfigMock.mockReturnValue(null)
+  buildCherryCloudProviderConfigMock.mockReturnValue({
+    providerId: 'anthropic',
+    providerSettings: { baseURL: 'https://cloud.cherryai.com.cn/v1', apiKey: 'managed-session' }
+  })
 })
 
 afterEach(() => {
@@ -63,6 +73,40 @@ afterEach(() => {
 })
 
 describe('providerToAiSdkConfig — builder dispatch matrix', () => {
+  it('routes managed Cherry Cloud models through Anthropic without selecting a provider API key', async () => {
+    const provider = makeProvider({ id: CHERRYAI_PROVIDER_ID })
+    const model = makeModel({
+      id: `${CHERRYAI_PROVIDER_ID}::deepseek-go`,
+      apiModelId: 'deepseek-go',
+      providerId: CHERRYAI_PROVIDER_ID,
+      group: CHERRY_CLOUD_MODEL_GROUP,
+      endpointTypes: [ENDPOINT_TYPE.ANTHROPIC_MESSAGES]
+    })
+
+    const resolved = await resolveProviderAiSdkConfig(provider, model)
+
+    expect(resolved.config.providerId).toBe('anthropic')
+    expect(resolved.credentialReceipt).toEqual({ attribution: 'unknown' })
+    expect(buildCherryCloudProviderConfigMock).toHaveBeenCalledOnce()
+    expect(resolveApiKeyMock).not.toHaveBeenCalled()
+  })
+
+  it('keeps the managed CherryAI default model on its API-key HMAC transport', async () => {
+    const provider = makeProvider({ id: CHERRYAI_PROVIDER_ID })
+    const model = makeModel({
+      id: CHERRYAI_DEFAULT_UNIQUE_MODEL_ID,
+      apiModelId: CHERRYAI_DEFAULT_MODEL_ID,
+      providerId: CHERRYAI_PROVIDER_ID,
+      group: 'Qwen'
+    })
+
+    const resolved = await resolveProviderAiSdkConfig(provider, model)
+
+    expect(resolved.config.providerId).toBe('openai-compatible')
+    expect(buildCherryCloudProviderConfigMock).not.toHaveBeenCalled()
+    expect(resolveApiKeyMock).toHaveBeenCalledWith(CHERRYAI_PROVIDER_ID, undefined)
+  })
+
   it('uses an explicit API key override instead of the provider rotation key', async () => {
     const provider = makeProvider({ id: 'openai' })
     const model = makeModel({ id: 'openai::gpt-4o', apiModelId: 'gpt-4o', providerId: 'openai' })

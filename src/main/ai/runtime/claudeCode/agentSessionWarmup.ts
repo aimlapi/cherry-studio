@@ -21,7 +21,7 @@ import { getProxyEnvironment } from '@main/services/proxy/proxyEnv'
 import { defaultAppHeaders } from '@main/utils/http'
 import type { AgentEntity } from '@shared/data/api/schemas/agents'
 import type { AgentSessionEntity } from '@shared/data/api/schemas/agentSessions'
-import { isCherryCloudWorkModel } from '@shared/data/presets/cherryai'
+import { isManagedCherryCloudModel } from '@shared/data/presets/cherryai'
 import type { McpServer } from '@shared/data/types/mcpServer'
 import type { Model, UniqueModelId } from '@shared/data/types/model'
 import { ENDPOINT_TYPE, parseUniqueModelId } from '@shared/data/types/model'
@@ -682,7 +682,7 @@ function deriveRouteFacts(
     }
   }
 
-  const usesCherryCloud = modelRefs.some((ref) => isCherryCloudWorkModel(ref.providerId, ref.model?.group))
+  const usesCherryCloud = modelRefs.some((ref) => isManagedCherryCloudModel(ref.providerId, ref.model?.group))
   const shouldUseGateway =
     usesCherryCloud ||
     modelRefs.some((ref) => ref.providerId !== primaryProvider.id || !usesAnthropicMessagesEndpoint(ref))

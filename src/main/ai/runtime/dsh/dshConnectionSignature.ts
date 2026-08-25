@@ -15,7 +15,7 @@ import { resolveKnowledgeBaseScope } from '@main/ai/utils/knowledgeScope'
 import type { AgentChannelEntity } from '@shared/data/api/schemas/agentChannels'
 import type { AgentEntity } from '@shared/data/api/schemas/agents'
 import type { AgentSessionEntity } from '@shared/data/api/schemas/agentSessions'
-import { isCherryCloudWorkModel } from '@shared/data/presets/cherryai'
+import { isManagedCherryCloudModel } from '@shared/data/presets/cherryai'
 import { type Model, parseUniqueModelId, type UniqueModelId } from '@shared/data/types/model'
 import type { ApiKeyEntry, Provider } from '@shared/data/types/provider'
 
@@ -86,7 +86,7 @@ export async function captureDshConnectionSnapshot(
   const linkedChannel = channel?.agentId === agent.id ? channel : null
   const apiKeys = providerService.getApiKeys(parsed.providerId, { enabled: true })
   const configuration = { ...agent.configuration, permission_mode: undefined }
-  const usesCherryCloud = isCherryCloudWorkModel(model.providerId, model.group)
+  const usesCherryCloud = isManagedCherryCloudModel(model.providerId, model.group)
   const gatewayConnectionFingerprint = usesCherryCloud
     ? `enabled:${readApiGatewayConnectionSnapshot().enabled}`
     : resolveDshInjectionApi(provider, model) === undefined

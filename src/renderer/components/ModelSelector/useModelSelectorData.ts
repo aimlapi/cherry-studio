@@ -5,7 +5,7 @@ import { usePins } from '@renderer/hooks/usePins'
 import { useProviders } from '@renderer/hooks/useProvider'
 import { getSearchMatchScore } from '@renderer/utils/model'
 import { isProviderSettingsListVisibleProvider } from '@renderer/utils/providerSettings'
-import { isCherryCloudWorkModel } from '@shared/data/presets/cherryai'
+import { isManagedCherryCloudModel } from '@shared/data/presets/cherryai'
 import { isUniqueModelId, type Model, parseUniqueModelId, type UniqueModelId } from '@shared/data/types/model'
 import type { Provider } from '@shared/data/types/provider'
 import { isExternalCliProvider } from '@shared/utils/provider'
@@ -137,7 +137,7 @@ export function useModelSelectorData({
       }
 
       // Cherry Cloud 套餐模型只服务 Work 智能体，不进入普通聊天或助手的模型目录。
-      if (!includeAgentOnlyProviders && isCherryCloudWorkModel(model.providerId, model.group)) {
+      if (!includeAgentOnlyProviders && isManagedCherryCloudModel(model.providerId, model.group)) {
         continue
       }
 

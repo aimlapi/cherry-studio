@@ -663,7 +663,7 @@ describe('buildClaudeCodeQueryRequestForAgentSession resume-token precedence', (
     })
   })
 
-  it('routes Cherry Cloud Work models through the local gateway regardless of endpoint type', async () => {
+  it('routes Cherry Cloud models through the local gateway regardless of endpoint type', async () => {
     mocks.getAgent.mockReturnValue({ id: 'agent-1', model: `${CHERRYAI_PROVIDER_ID}::deepseek-free` })
     mocks.getProviderByProviderId.mockReturnValue({
       id: CHERRYAI_PROVIDER_ID,
@@ -701,7 +701,7 @@ describe('buildClaudeCodeQueryRequestForAgentSession resume-token precedence', (
     expect(mocks.resolveApiKey).not.toHaveBeenCalled()
   })
 
-  it('requires gateway consent for Cherry Cloud Work models', async () => {
+  it('requires gateway consent for Cherry Cloud models', async () => {
     mocks.getAgent.mockReturnValue({ id: 'agent-1', model: `${CHERRYAI_PROVIDER_ID}::deepseek-free` })
     mocks.getProviderByProviderId.mockReturnValue({
       id: CHERRYAI_PROVIDER_ID,

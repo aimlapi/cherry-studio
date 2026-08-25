@@ -17,7 +17,7 @@ import { providerService } from '@data/services/ProviderService'
 import type { ProviderConfig, ProviderModelConfig } from '@earendil-works/pi-coding-agent'
 import { createAiUsagePricingSnapshot } from '@main/ai/utils/usageCapture'
 import { hasKnownPiContextWindow, mapEndpointToPiApi, type PiApi } from '@shared/ai/piModelCompatibility'
-import { isCherryCloudWorkModel } from '@shared/data/presets/cherryai'
+import { isManagedCherryCloudModel } from '@shared/data/presets/cherryai'
 import { isCodexProviderId } from '@shared/data/presets/codex'
 import { hasRuntimeTransportAdapter } from '@shared/data/presets/runtimeTransport'
 import {
@@ -233,7 +233,7 @@ export function buildPiCloudGatewayInjection(
   model: Model,
   gateway: { baseUrl: string; apiKey: string; usageHeaders: Record<string, string> }
 ): PiGatewayProviderInjection {
-  if (!isCherryCloudWorkModel(model.providerId, model.group)) {
+  if (!isManagedCherryCloudModel(model.providerId, model.group)) {
     throw new PiUnsupportedProviderError(provider.id)
   }
 
@@ -320,7 +320,7 @@ export async function resolvePiProviderInjectionForSession(
   model: Model,
   enabledApiKeys?: readonly ApiKeyEntry[]
 ): Promise<PiProviderInjection> {
-  if (!isCherryCloudWorkModel(model.providerId, model.group)) {
+  if (!isManagedCherryCloudModel(model.providerId, model.group)) {
     return resolvePiProviderInjectionFromSnapshot(provider, model, enabledApiKeys)
   }
 
@@ -342,7 +342,7 @@ export async function assertPiProviderUsable(uniqueModelId: UniqueModelId): Prom
 
   // Cloud authentication is the Product Session, not a provider API key.
   // Gateway consent is checked during materialization; pi still needs complete model metadata.
-  if (isCherryCloudWorkModel(model.providerId, model.group)) {
+  if (isManagedCherryCloudModel(model.providerId, model.group)) {
     if (!hasKnownPiContextWindow(model)) throw new PiMissingContextWindowError(model.id)
     return
   }
