@@ -136,7 +136,8 @@ export function useModelSelectorData({
         continue
       }
 
-      // Cherry Cloud 套餐模型只服务 Work 智能体，不进入普通聊天或助手的模型目录。
+      // 后端尚未返回每个 Cloud 模型可用于聊天、翻译等哪些功能，因此暂时只在 Agent 入口展示。
+      // 后续应由后端下发的功能选项决定各模型选择器中的可见性。
       if (!includeAgentOnlyProviders && isManagedCherryCloudModel(model.providerId, model.group)) {
         continue
       }
