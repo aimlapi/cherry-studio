@@ -50,7 +50,7 @@ export default function ApiKey({ providerId, onRequestModelPullGuide }: ApiKeyPr
 
   return (
     <>
-      <ProviderSection id={provider.id === 'cherryin' ? 'cherryin-api-key-section' : undefined}>
+      <ProviderSection id={provider.id === 'cherryin' ? 'cherryin-api-key-section' : 'setting-provider-api-key'}>
         <ProviderField
           className="space-y-2"
           title={
