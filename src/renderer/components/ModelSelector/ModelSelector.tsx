@@ -154,6 +154,7 @@ function modelsFromSelectedIds(
 
 function ModelRow({
   item,
+  disabled,
   isFocused,
   onPin,
   onSelect,
@@ -165,6 +166,7 @@ function ModelRow({
   t
 }: {
   item: ModelSelectorModelItem
+  disabled: boolean
   isFocused: boolean
   onPin: (modelId: UniqueModelId) => void
   onSelect: (item: ModelSelectorModelItem) => void
@@ -234,6 +236,7 @@ function ModelRow({
   return (
     <ModelSelectorDetailCard item={item} provider={item.provider} portalContainer={detailPortalContainer}>
       <ModelSelectorRow
+        disabled={disabled}
         selected={isSelected}
         focused={isFocused}
         showSelectedIndicator={!showCheckbox && isSelected}
@@ -334,6 +337,7 @@ export function ModelSelector(props: ModelSelectorProps) {
     showTagFilter = true,
     showPinnedModels = true,
     showPinActions = true,
+    isModelDisabled,
     prioritizedProviderIds = DEFAULT_PRIORITIZED_PROVIDER_IDS,
     side = 'bottom',
     align = 'start',
@@ -565,6 +569,7 @@ export function ModelSelector(props: ModelSelectorProps) {
 
   const handleSelectItem = useCallback(
     (item: ModelSelectorModelItem) => {
+      if (isModelDisabled?.(item.model, item.provider)) return
       skipNextFocusScroll.current = true
 
       if (multiple && multiSelectModeRef.current) {
@@ -583,7 +588,7 @@ export function ModelSelector(props: ModelSelectorProps) {
       emitSelection([item.modelId])
       setOpen(false)
     },
-    [emitSelection, multiple, rawSelectedModelIds, setOpen]
+    [emitSelection, isModelDisabled, multiple, rawSelectedModelIds, setOpen]
   )
 
   const handleClose = useCallback(() => {
@@ -827,6 +832,7 @@ export function ModelSelector(props: ModelSelectorProps) {
           }}>
           <ModelRow
             item={item}
+            disabled={isModelDisabled?.(item.model, item.provider) ?? false}
             isFocused={focusedItemKey === item.key}
             isPinActionDisabled={isPinActionDisabled}
             isSelected={visibleSelectedModelIdSet.has(item.modelId)}
@@ -846,6 +852,7 @@ export function ModelSelector(props: ModelSelectorProps) {
       handleSelectItem,
       handleTogglePin,
       isPinActionDisabled,
+      isModelDisabled,
       multiple,
       multiSelectMode,
       setFocusedItemKey,
