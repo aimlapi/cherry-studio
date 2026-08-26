@@ -4277,7 +4277,7 @@
   "settings.provider.check_all_keys": "Check All Keys",
   "settings.provider.check_multiple_keys": "Check Multiple API Keys",
   "settings.provider.cherry_cloud.logged_in": "Logged in",
-  "settings.provider.cherry_cloud.login": "Login with Cherry Studio account",
+  "settings.provider.cherry_cloud.login": "Login",
   "settings.provider.cherry_cloud.logout": "Log out",
   "settings.provider.cherry_cloud.logout_failed": "Could not log out. Please try again.",
   "settings.provider.cherry_cloud.sign_in_failed": "Sign-in failed. Please try again.",

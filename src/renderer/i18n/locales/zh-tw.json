@@ -4277,7 +4277,7 @@
   "settings.provider.check_all_keys": "檢查所有金鑰",
   "settings.provider.check_multiple_keys": "檢查多個 API 金鑰",
   "settings.provider.cherry_cloud.logged_in": "已登入",
-  "settings.provider.cherry_cloud.login": "使用 Cherry Studio 帳號登入",
+  "settings.provider.cherry_cloud.login": "登入",
   "settings.provider.cherry_cloud.logout": "登出",
   "settings.provider.cherry_cloud.logout_failed": "無法登出，請重試。",
   "settings.provider.cherry_cloud.sign_in_failed": "登入失敗，請重試。",
