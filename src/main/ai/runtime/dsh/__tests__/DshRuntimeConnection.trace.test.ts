@@ -29,7 +29,9 @@ vi.spyOn(trace, 'getTracer').mockReturnValue({ startSpan } as never)
 
 const runtimeMocks = vi.hoisted(() => ({
   snapshot: undefined as any,
-  bridgeRequest: vi.fn().mockResolvedValue(undefined)
+  bridgeRequest: vi.fn().mockResolvedValue(undefined),
+  resolveInjection: vi.fn(),
+  resolveDshInjectionApi: vi.fn()
 }))
 
 const baseSnapshot = () => ({
@@ -42,6 +44,16 @@ const baseSnapshot = () => ({
   additionalSkillPaths: [],
   mcpServerSnapshots: [],
   linkedChannel: null
+})
+
+const baseInjection = () => ({
+  providerName: 'deepseek',
+  api: 'openai-completions',
+  baseUrl: 'https://api.deepseek.com',
+  modelId: 'deepseek-chat',
+  apiKey: 'key',
+  modelConfig: { id: 'deepseek-chat', contextWindow: 128_000, maxTokens: 8192 },
+  usageCapture: { owner: 'provider-calls' }
 })
 
 /** Push-driven stand-in for the SDK's notification subscription. */
@@ -90,15 +102,8 @@ vi.mock('../dshConnectionSignature', () => ({
   captureDshConnectionSnapshot: vi.fn(() => Promise.resolve(runtimeMocks.snapshot))
 }))
 vi.mock('../modelInjection', () => ({
-  resolveDshProviderInjectionFromSnapshot: vi.fn(() => ({
-    providerName: 'deepseek',
-    api: 'openai-completions',
-    baseUrl: 'https://api.deepseek.com',
-    modelId: 'deepseek-chat',
-    apiKey: 'key',
-    modelConfig: { id: 'deepseek-chat', contextWindow: 128_000, maxTokens: 8192 },
-    usageCapture: { owner: 'provider-calls' }
-  }))
+  resolveDshProviderInjectionFromSnapshot: runtimeMocks.resolveInjection,
+  resolveDshInjectionApi: runtimeMocks.resolveDshInjectionApi
 }))
 vi.mock('../compositionBuilder', () => ({
   buildDshCompositionYaml: vi.fn(() => 'plugins: []'),
@@ -170,12 +175,28 @@ const drain = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
 beforeEach(() => {
   runtimeMocks.snapshot = baseSnapshot()
   runtimeMocks.bridgeRequest.mockReset().mockResolvedValue(undefined)
+  runtimeMocks.resolveInjection.mockReset().mockReturnValue(baseInjection())
+  runtimeMocks.resolveDshInjectionApi.mockReset().mockReturnValue('openai-completions')
   vi.mocked(DshBridgeServer).mockClear()
   spans.length = 0
   startSpan.mockClear()
 })
 
 describe('DshRuntimeConnection tracing', () => {
+  it('establishes the gateway baseline after starting the gateway', async () => {
+    runtimeMocks.snapshot = { ...baseSnapshot(), signature: 'gateway-stopped' }
+    runtimeMocks.resolveDshInjectionApi.mockReturnValue(undefined)
+    runtimeMocks.resolveInjection.mockImplementation(() => {
+      runtimeMocks.snapshot = { ...baseSnapshot(), signature: 'gateway-running' }
+      return baseInjection()
+    })
+
+    const connection = await new DshRuntimeConnection(connectInput).start()
+
+    expect(runtimeMocks.resolveInjection).toHaveBeenCalledTimes(2)
+    await connection.close()
+  })
+
   it('feeds runtime session events to the trace recorder', async () => {
     const connection = await new DshRuntimeConnection(connectInput).start()
     subscription.push({

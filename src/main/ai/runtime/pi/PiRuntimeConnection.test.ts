@@ -2,6 +2,7 @@ import type * as NodeFs from 'node:fs'
 
 import type { AgentSessionEvent } from '@earendil-works/pi-coding-agent'
 import { SpanStatusCode, trace } from '@opentelemetry/api'
+import { CHERRY_CLOUD_MODEL_GROUP, CHERRYAI_PROVIDER_ID } from '@shared/data/presets/cherryai'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { AgentRuntimeConnectInput, AgentRuntimeEvent, AgentRuntimeUserInput } from '../types'
@@ -406,6 +407,52 @@ describe('PiRuntimeConnection', () => {
 
     await expect(new PiRuntimeConnection(input).start()).rejects.toBeInstanceOf(ApiGatewayNotRunningError)
     expect(mocks.broadcast).toHaveBeenCalledWith('api_gateway.required', { sessionId: SESSION_ID })
+  })
+
+  it('establishes the Cloud baseline after starting the gateway', async () => {
+    let gatewayRunning = false
+    const cloudModelId = `${CHERRYAI_PROVIDER_ID}::deepseek-free` as const
+    const facts = {
+      agent: { id: 'agent-1', model: cloudModelId, instructions: 'Be helpful.' },
+      session: mocks.getById(),
+      provider: { id: CHERRYAI_PROVIDER_ID },
+      model: {
+        id: cloudModelId,
+        providerId: CHERRYAI_PROVIDER_ID,
+        group: CHERRY_CLOUD_MODEL_GROUP
+      },
+      enabledApiKeys: [],
+      additionalSkillPaths: [],
+      mcpServerSnapshots: new Map(),
+      linkedChannel: null
+    }
+    mocks.captureConnectionSnapshot.mockImplementation(async () => ({
+      ...facts,
+      signature: gatewayRunning ? 'gateway-running' : 'gateway-stopped'
+    }))
+    mocks.resolveInjection.mockImplementation(() => {
+      gatewayRunning = true
+      return {
+        providerName: CHERRYAI_PROVIDER_ID,
+        api: 'anthropic-messages',
+        providerConfig: {
+          name: 'Cherry Cloud',
+          baseUrl: 'http://127.0.0.1:23333',
+          apiKey: 'placeholder',
+          api: 'anthropic-messages',
+          models: []
+        },
+        apiKey: 'gateway-key',
+        modelId: 'deepseek-free',
+        usageCapture: { owner: 'provider-calls' }
+      }
+    })
+
+    const connection = await new PiRuntimeConnection({ ...input, modelId: cloudModelId }).start()
+
+    expect(mocks.resolveInjection).toHaveBeenCalledTimes(2)
+    expect(mocks.createAgentSession).toHaveBeenCalledOnce()
+    await connection.close()
   })
 
   it('forces Cherry-owned pi dirs and creates a fresh session (no resume)', async () => {
