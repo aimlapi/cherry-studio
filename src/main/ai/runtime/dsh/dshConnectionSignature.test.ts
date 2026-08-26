@@ -15,7 +15,6 @@ const mocks = vi.hoisted(() => ({
   listTools: vi.fn(),
   findBySessionId: vi.fn(),
   resolveDshInjectionApi: vi.fn(),
-  gatewayEnabled: true,
   gatewayFingerprint: 'gateway-1'
 }))
 
@@ -48,7 +47,6 @@ vi.mock('@main/ai/skills/SkillService', () => ({
 vi.mock('@main/ai/runtime/dsh/modelInjection', () => ({ resolveDshInjectionApi: mocks.resolveDshInjectionApi }))
 vi.mock('@main/ai/runtime/agentApiGateway', () => ({
   readApiGatewayConnectionSnapshot: () => ({
-    enabled: mocks.gatewayEnabled,
     fingerprint: mocks.gatewayFingerprint
   })
 }))
@@ -82,7 +80,6 @@ beforeEach(() => {
   mocks.listTools.mockReturnValue([{ name: 'search', inputSchema: { type: 'object' } }])
   mocks.findBySessionId.mockReturnValue(null)
   mocks.resolveDshInjectionApi.mockReturnValue(undefined)
-  mocks.gatewayEnabled = true
   mocks.gatewayFingerprint = 'gateway-1'
 })
 
@@ -149,7 +146,7 @@ describe('captureDshConnectionSnapshot', () => {
     })
   })
 
-  it('rebuilds the Cloud route on consent changes, not runtime-only gateway changes', async () => {
+  it('rebuilds the Cloud route when the gateway connection identity changes', async () => {
     mocks.resolveDshInjectionApi.mockReturnValue('anthropic-messages')
     mocks.getProvider.mockResolvedValue({ id: CHERRYAI_PROVIDER_ID })
     mocks.getModel.mockResolvedValue({
@@ -161,9 +158,6 @@ describe('captureDshConnectionSnapshot', () => {
       captureDshConnectionSnapshot('session-1', agent.id, `${CHERRYAI_PROVIDER_ID}::deepseek-free`)
     const cloudSignature = (await captureCloud()).signature
     mocks.gatewayFingerprint = 'gateway-2'
-    expect((await captureCloud()).signature).toBe(cloudSignature)
-
-    mocks.gatewayEnabled = false
     expect((await captureCloud()).signature).not.toBe(cloudSignature)
   })
 

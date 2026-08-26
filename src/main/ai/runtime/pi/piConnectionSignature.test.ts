@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
   findMcp: vi.fn(),
   listTools: vi.fn(),
   findBySessionId: vi.fn(),
-  gatewayEnabled: true
+  gatewayFingerprint: 'gateway-1'
 }))
 
 vi.mock('@application', () => ({
@@ -43,7 +43,7 @@ vi.mock('@main/ai/skills/SkillService', () => ({
   }
 }))
 vi.mock('@main/ai/runtime/agentApiGateway', () => ({
-  readApiGatewayConnectionSnapshot: () => ({ enabled: mocks.gatewayEnabled })
+  readApiGatewayConnectionSnapshot: () => ({ fingerprint: mocks.gatewayFingerprint })
 }))
 const { capturePiConnectionSnapshot } = await import('./piConnectionSignature')
 
@@ -73,7 +73,7 @@ beforeEach(() => {
   mocks.findMcp.mockReturnValue({ id: 'mcp-1', name: 'server', updatedAt: 1 })
   mocks.listTools.mockReturnValue([{ name: 'search', inputSchema: { type: 'object' } }])
   mocks.findBySessionId.mockReturnValue(null)
-  mocks.gatewayEnabled = true
+  mocks.gatewayFingerprint = 'gateway-1'
 })
 
 describe('capturePiConnectionSnapshot', () => {
@@ -138,7 +138,7 @@ describe('capturePiConnectionSnapshot', () => {
     })
   })
 
-  it('rebuilds a Cloud route when gateway consent is withdrawn', async () => {
+  it('rebuilds a Cloud route when the gateway connection identity changes', async () => {
     mocks.getProvider.mockResolvedValue({ id: CHERRYAI_PROVIDER_ID })
     mocks.getModel.mockResolvedValue({
       id: `${CHERRYAI_PROVIDER_ID}::deepseek-free`,
@@ -147,10 +147,10 @@ describe('capturePiConnectionSnapshot', () => {
     })
     const captureCloud = () =>
       capturePiConnectionSnapshot('session-1', agent.id, `${CHERRYAI_PROVIDER_ID}::deepseek-free`)
-    const enabledSignature = (await captureCloud()).signature
+    const initialSignature = (await captureCloud()).signature
 
-    mocks.gatewayEnabled = false
+    mocks.gatewayFingerprint = 'gateway-2'
 
-    expect((await captureCloud()).signature).not.toBe(enabledSignature)
+    expect((await captureCloud()).signature).not.toBe(initialSignature)
   })
 })

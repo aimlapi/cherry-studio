@@ -1218,6 +1218,34 @@ describe('deriveConnectionConfig', () => {
     expect(mocks.preferenceGet).toHaveBeenCalledWith('feature.api_gateway.api_key')
   })
 
+  it('changes a Cloud route rebuild signature when the gateway key changes', async () => {
+    mocks.getAgent.mockReturnValue({
+      id: 'agent-1',
+      model: `${CHERRYAI_PROVIDER_ID}::deepseek-free`,
+      disabledTools: [],
+      mcps: [],
+      configuration: {}
+    })
+    mocks.getProviderByProviderId.mockReturnValue({ id: CHERRYAI_PROVIDER_ID })
+    mocks.getModelByKey.mockReturnValue({
+      id: 'deepseek-free',
+      apiModelId: 'deepseek-free',
+      group: CHERRY_CLOUD_MODEL_GROUP
+    })
+    mocks.apiGatewayIsRunning.mockReturnValue(true)
+    mocks.preferenceGet.mockImplementation((key: string) =>
+      key === 'feature.api_gateway.api_key' ? 'gateway-key-1' : undefined
+    )
+    const first = await deriveSignature()
+
+    mocks.preferenceGet.mockImplementation((key: string) =>
+      key === 'feature.api_gateway.api_key' ? 'gateway-key-2' : undefined
+    )
+    const changed = await deriveSignature()
+
+    expect(changed.rebuildSignature).not.toBe(first.rebuildSignature)
+  })
+
   it('is stable across repeated derivation and across key rotation', async () => {
     const first = await deriveSignature()
     const second = await deriveSignature()

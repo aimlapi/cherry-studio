@@ -83,8 +83,8 @@ export async function capturePiConnectionSnapshot(
   const linkedChannel = channel?.agentId === agent.id ? channel : null
   const apiKeys = providerService.getApiKeys(parsed.providerId, { enabled: true })
   const configuration = { ...agent.configuration, permission_mode: undefined }
-  const cherryCloudGatewayEnabled = isManagedCherryCloudModel(model.providerId, model.group)
-    ? readApiGatewayConnectionSnapshot().enabled
+  const cherryCloudGatewayFingerprint = isManagedCherryCloudModel(model.providerId, model.group)
+    ? readApiGatewayConnectionSnapshot().fingerprint
     : null
   const signature = createHash('sha256')
     .update(
@@ -102,7 +102,7 @@ export async function capturePiConnectionSnapshot(
           mcpTools,
           linkedChannelId: linkedChannel?.id ?? null,
           knowledgeBaseIds: resolveKnowledgeBaseScope(agent.knowledgeBaseIds, selectedKnowledgeBaseIds),
-          cherryCloudGatewayEnabled
+          cherryCloudGatewayFingerprint
         })
       )
     )

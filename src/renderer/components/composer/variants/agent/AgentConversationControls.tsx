@@ -4,14 +4,12 @@ import { ModelSelector } from '@renderer/components/ModelSelector'
 import { OpenTargetButton } from '@renderer/components/OpenTarget'
 import { type ResourceEditDialogTarget } from '@renderer/components/resourceCatalog/dialogs/edit'
 import { AgentSelector, WorkspaceSelector } from '@renderer/components/resourceCatalog/selectors'
-import { ipcApi } from '@renderer/ipc'
 import { cn } from '@renderer/utils/style'
 import type { AgentWorkspaceEntity } from '@shared/data/api/schemas/agentWorkspaces'
-import { isManagedCherryCloudModel } from '@shared/data/presets/cherryai'
 import type { AgentEntity } from '@shared/data/types/agent'
-import type { Model, UniqueModelId } from '@shared/data/types/model'
+import type { Model } from '@shared/data/types/model'
 import { Bot, ChevronDown, CircleSlash, Folder, Sparkles, TriangleAlert, X } from 'lucide-react'
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -163,15 +161,6 @@ function ModelControl({
   const triggerClassName = cn(baseTriggerClassName, iconOnly && model && COMPOSER_ICON_ONLY_SELECTOR_BUTTON_CLASS)
   const labelClassName = cn('truncate', iconOnly && model && COMPOSER_ICON_ONLY_LABEL_CLASS)
   const modelLabel = model ? model.name : selectModelLabel
-  const modelSyncRequestId = useRef(0)
-  const [quotaExhaustedModelIds, setQuotaExhaustedModelIds] = useState<readonly UniqueModelId[] | null>(null)
-  const isModelDisabled = useCallback(
-    (candidate: Model) =>
-      quotaExhaustedModelIds === null
-        ? isManagedCherryCloudModel(candidate.providerId, candidate.group)
-        : quotaExhaustedModelIds.includes(candidate.id),
-    [quotaExhaustedModelIds]
-  )
   const trigger = (
     <Button variant="ghost" size="sm" className={triggerClassName} disabled={!canChangeModel}>
       {model ? (
@@ -190,25 +179,9 @@ function ModelControl({
       <ChevronDown size={14} aria-hidden className={cn('text-muted-foreground', iconOnly && model && 'hidden')} />
     </Button>
   )
-  const handleOpenChange = (open: boolean) => {
-    if (!open) return
-    const requestId = ++modelSyncRequestId.current
-    setQuotaExhaustedModelIds(null)
-    void ipcApi
-      .request('cherry_cloud.models.sync')
-      .then((result) => {
-        if (modelSyncRequestId.current === requestId) {
-          setQuotaExhaustedModelIds(result.quotaExhaustedModelIds)
-        }
-      })
-      .catch(() => undefined)
-  }
-
   return (
     <ModelSelector
       multiple={false}
-      onOpenChange={handleOpenChange}
-      isModelDisabled={isModelDisabled}
       value={model}
       onSelect={onModelSelect}
       filter={modelFilter}

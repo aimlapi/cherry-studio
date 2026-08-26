@@ -692,7 +692,7 @@ function deriveRouteFacts(
     return {
       branch: usesCherryCloud ? 'cherry-cloud' : 'gateway',
       baseUrl: gateway.baseUrl,
-      credentialsFingerprint: usesCherryCloud ? `cherry-cloud-gateway-enabled:${gateway.enabled}` : gateway.fingerprint,
+      credentialsFingerprint: gateway.fingerprint,
       toolSearchCompatible,
       modelIds: {
         primary: toGatewayModelId(primaryRef),
@@ -774,8 +774,7 @@ async function resolveClaudeCodeRuntimeRoute(
         customHeaders: gateway.usageHeaders,
         usageCapture: { owner: 'provider-calls' },
         internalRequestToken: gateway.internalRequestToken,
-        credentialsFingerprint:
-          facts.branch === 'cherry-cloud' ? facts.credentialsFingerprint : gateway.connectionFingerprint
+        credentialsFingerprint: gateway.connectionFingerprint
       }
     }
     case 'direct': {
