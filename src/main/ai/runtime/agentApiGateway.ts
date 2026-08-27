@@ -12,14 +12,13 @@ import { API_GATEWAY_REQUIRED_I18N_KEY } from '@shared/types/apiGateway'
  * Read-only gateway connection identity for route derivation and connection signatures.
  * Read-only by contract — snapshot capture must never generate or persist a key.
  */
-export function readApiGatewayConnectionSnapshot(): { baseUrl: string; enabled: boolean; fingerprint: string } {
+export function readApiGatewayConnectionSnapshot(): { baseUrl: string; fingerprint: string } {
   const apiGatewayService = application.get('ApiGatewayService')
   const config = apiGatewayService.getCurrentConfig()
   const gatewayKey = application.get('PreferenceService').get('feature.api_gateway.api_key')
   const baseUrl = `http://${config.host || '127.0.0.1'}:${config.port || 23333}`
   return {
     baseUrl,
-    enabled: config.enabled,
     fingerprint: createHash('sha256')
       .update(
         JSON.stringify({
