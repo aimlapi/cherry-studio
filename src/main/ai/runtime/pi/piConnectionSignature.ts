@@ -83,7 +83,7 @@ export async function capturePiConnectionSnapshot(
   const linkedChannel = channel?.agentId === agent.id ? channel : null
   const apiKeys = providerService.getApiKeys(parsed.providerId, { enabled: true })
   const configuration = { ...agent.configuration, permission_mode: undefined }
-  const cherryCloudGatewayFingerprint = isManagedCherryCloudModel(model.providerId, model.group)
+  const cherryCloudGatewayFingerprint = isManagedCherryCloudModel(model.providerId)
     ? readApiGatewayConnectionSnapshot().fingerprint
     : null
   const signature = createHash('sha256')

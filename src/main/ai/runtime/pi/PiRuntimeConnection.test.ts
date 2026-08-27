@@ -2,7 +2,7 @@ import type * as NodeFs from 'node:fs'
 
 import type { AgentSessionEvent } from '@earendil-works/pi-coding-agent'
 import { SpanStatusCode, trace } from '@opentelemetry/api'
-import { CHERRY_CLOUD_MODEL_GROUP, CHERRYAI_PROVIDER_ID } from '@shared/data/presets/cherryai'
+import { CHERRY_CLOUD_MODEL_GROUP, CHERRY_CLOUD_PROVIDER_ID } from '@shared/data/presets/cherryai'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { AgentRuntimeConnectInput, AgentRuntimeEvent, AgentRuntimeUserInput } from '../types'
@@ -413,14 +413,14 @@ describe('PiRuntimeConnection', () => {
 
   it('establishes the Cloud baseline after starting the gateway', async () => {
     let gatewayRunning = false
-    const cloudModelId = `${CHERRYAI_PROVIDER_ID}::deepseek-free` as const
+    const cloudModelId = `${CHERRY_CLOUD_PROVIDER_ID}::deepseek-free` as const
     const facts = {
       agent: { id: 'agent-1', model: cloudModelId, instructions: 'Be helpful.' },
       session: mocks.getById(),
-      provider: { id: CHERRYAI_PROVIDER_ID },
+      provider: { id: CHERRY_CLOUD_PROVIDER_ID },
       model: {
         id: cloudModelId,
-        providerId: CHERRYAI_PROVIDER_ID,
+        providerId: CHERRY_CLOUD_PROVIDER_ID,
         group: CHERRY_CLOUD_MODEL_GROUP
       },
       enabledApiKeys: [],
@@ -435,7 +435,7 @@ describe('PiRuntimeConnection', () => {
     mocks.resolveInjection.mockImplementation(() => {
       gatewayRunning = true
       return {
-        providerName: CHERRYAI_PROVIDER_ID,
+        providerName: CHERRY_CLOUD_PROVIDER_ID,
         api: 'anthropic-messages',
         providerConfig: {
           name: 'Cherry Cloud',

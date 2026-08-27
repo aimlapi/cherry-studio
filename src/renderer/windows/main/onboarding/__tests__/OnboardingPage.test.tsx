@@ -3,7 +3,11 @@ import '@testing-library/jest-dom/vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-import { CHERRYAI_DEFAULT_UNIQUE_MODEL_ID, CHERRYAI_PROVIDER_ID } from '@shared/data/presets/cherryai'
+import {
+  CHERRY_CLOUD_PROVIDER_ID,
+  CHERRYAI_DEFAULT_UNIQUE_MODEL_ID,
+  CHERRYAI_PROVIDER_ID
+} from '@shared/data/presets/cherryai'
 import { LATEST_PRIVACY_POLICY_VERSION } from '@shared/utils/constants'
 import {
   mockUseMultiplePreferences,
@@ -366,6 +370,7 @@ describe('OnboardingPage', () => {
     expect(modelSettingsProps?.onDefaultModelSelected).toBeTypeOf('function')
     expect(modelSettingsProps?.showPaintingModel).toBe(false)
     expect(modelSettingsProps?.modelFilter?.({ providerId: CHERRYAI_PROVIDER_ID })).toBe(false)
+    expect(modelSettingsProps?.modelFilter?.({ providerId: CHERRY_CLOUD_PROVIDER_ID })).toBe(false)
     expect(modelSettingsProps?.modelFilter?.({ providerId: 'openai' })).toBe(true)
     expect(screen.getByRole('button', { name: /onboarding\.select_model\.start/ })).toBeDisabled()
   })

@@ -1,5 +1,5 @@
 import { REASONING_FORMAT_PROFILES } from '@cherrystudio/provider-registry'
-import { CHERRY_CLOUD_MODEL_GROUP, CHERRYAI_PROVIDER_ID } from '@shared/data/presets/cherryai'
+import { CHERRY_CLOUD_MODEL_GROUP, CHERRY_CLOUD_PROVIDER_ID } from '@shared/data/presets/cherryai'
 import { ENDPOINT_TYPE, type EndpointType, type Model, MODEL_CAPABILITY } from '@shared/data/types/model'
 import type { Provider } from '@shared/data/types/provider'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -693,9 +693,9 @@ describe('buildClaudeCodeQueryRequestForAgentSession resume-token precedence', (
   })
 
   it('routes Cherry Cloud models through the local gateway regardless of endpoint type', async () => {
-    mocks.getAgent.mockReturnValue({ id: 'agent-1', model: `${CHERRYAI_PROVIDER_ID}::deepseek-free` })
+    mocks.getAgent.mockReturnValue({ id: 'agent-1', model: `${CHERRY_CLOUD_PROVIDER_ID}::deepseek-free` })
     mocks.getProviderByProviderId.mockReturnValue({
-      id: CHERRYAI_PROVIDER_ID,
+      id: CHERRY_CLOUD_PROVIDER_ID,
       endpointConfigs: {
         [ENDPOINT_TYPE.ANTHROPIC_MESSAGES]: { baseUrl: 'https://cloud.example/v1' }
       }
@@ -725,15 +725,15 @@ describe('buildClaudeCodeQueryRequestForAgentSession resume-token precedence', (
     expect(request?.connectionConfig.rebuildSignature).toBe(current.config.rebuildSignature)
     expect(request?.settings.env).toMatchObject({
       ANTHROPIC_BASE_URL: 'http://127.0.0.1:23333',
-      ANTHROPIC_MODEL: `${CHERRYAI_PROVIDER_ID}:deepseek-free`
+      ANTHROPIC_MODEL: `${CHERRY_CLOUD_PROVIDER_ID}:deepseek-free`
     })
     expect(mocks.resolveApiKey).not.toHaveBeenCalled()
   })
 
   it('requires gateway consent for Cherry Cloud models', async () => {
-    mocks.getAgent.mockReturnValue({ id: 'agent-1', model: `${CHERRYAI_PROVIDER_ID}::deepseek-free` })
+    mocks.getAgent.mockReturnValue({ id: 'agent-1', model: `${CHERRY_CLOUD_PROVIDER_ID}::deepseek-free` })
     mocks.getProviderByProviderId.mockReturnValue({
-      id: CHERRYAI_PROVIDER_ID,
+      id: CHERRY_CLOUD_PROVIDER_ID,
       endpointConfigs: {
         [ENDPOINT_TYPE.ANTHROPIC_MESSAGES]: { baseUrl: 'https://cloud.example/v1' }
       }
@@ -1251,12 +1251,12 @@ describe('deriveConnectionConfig', () => {
   it('changes a Cloud route rebuild signature when the gateway key changes', async () => {
     mocks.getAgent.mockReturnValue({
       id: 'agent-1',
-      model: `${CHERRYAI_PROVIDER_ID}::deepseek-free`,
+      model: `${CHERRY_CLOUD_PROVIDER_ID}::deepseek-free`,
       disabledTools: [],
       mcps: [],
       configuration: {}
     })
-    mocks.getProviderByProviderId.mockReturnValue({ id: CHERRYAI_PROVIDER_ID })
+    mocks.getProviderByProviderId.mockReturnValue({ id: CHERRY_CLOUD_PROVIDER_ID })
     mocks.getModelByKey.mockReturnValue({
       id: 'deepseek-free',
       apiModelId: 'deepseek-free',

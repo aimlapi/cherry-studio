@@ -1,5 +1,5 @@
 import type { AgentEntity } from '@shared/data/api/schemas/agents'
-import { CHERRY_CLOUD_MODEL_GROUP, CHERRYAI_PROVIDER_ID } from '@shared/data/presets/cherryai'
+import { CHERRY_CLOUD_MODEL_GROUP, CHERRY_CLOUD_PROVIDER_ID } from '@shared/data/presets/cherryai'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
@@ -148,14 +148,14 @@ describe('captureDshConnectionSnapshot', () => {
 
   it('rebuilds the Cloud route when the gateway connection identity changes', async () => {
     mocks.resolveDshInjectionApi.mockReturnValue('anthropic-messages')
-    mocks.getProvider.mockResolvedValue({ id: CHERRYAI_PROVIDER_ID })
+    mocks.getProvider.mockResolvedValue({ id: CHERRY_CLOUD_PROVIDER_ID })
     mocks.getModel.mockResolvedValue({
-      id: `${CHERRYAI_PROVIDER_ID}::deepseek-free`,
-      providerId: CHERRYAI_PROVIDER_ID,
+      id: `${CHERRY_CLOUD_PROVIDER_ID}::deepseek-free`,
+      providerId: CHERRY_CLOUD_PROVIDER_ID,
       group: CHERRY_CLOUD_MODEL_GROUP
     })
     const captureCloud = () =>
-      captureDshConnectionSnapshot('session-1', agent.id, `${CHERRYAI_PROVIDER_ID}::deepseek-free`)
+      captureDshConnectionSnapshot('session-1', agent.id, `${CHERRY_CLOUD_PROVIDER_ID}::deepseek-free`)
     const cloudSignature = (await captureCloud()).signature
     mocks.gatewayFingerprint = 'gateway-2'
     expect((await captureCloud()).signature).not.toBe(cloudSignature)

@@ -686,7 +686,7 @@ function deriveRouteFacts(
     }
   }
 
-  const usesCherryCloud = modelRefs.some((ref) => isManagedCherryCloudModel(ref.providerId, ref.model?.group))
+  const usesCherryCloud = modelRefs.some((ref) => isManagedCherryCloudModel(ref.providerId))
   const shouldUseGateway =
     usesCherryCloud ||
     modelRefs.some((ref) => ref.providerId !== primaryProvider.id || !usesAnthropicMessagesEndpoint(ref))

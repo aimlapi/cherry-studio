@@ -86,7 +86,7 @@ export async function captureDshConnectionSnapshot(
   const linkedChannel = channel?.agentId === agent.id ? channel : null
   const apiKeys = providerService.getApiKeys(parsed.providerId, { enabled: true })
   const configuration = { ...agent.configuration, permission_mode: undefined }
-  const usesCherryCloud = isManagedCherryCloudModel(model.providerId, model.group)
+  const usesCherryCloud = isManagedCherryCloudModel(model.providerId)
   const gatewayConnectionFingerprint =
     usesCherryCloud || resolveDshInjectionApi(provider, model) === undefined
       ? readApiGatewayConnectionSnapshot().fingerprint

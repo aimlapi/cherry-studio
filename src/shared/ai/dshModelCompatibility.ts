@@ -13,7 +13,6 @@
  */
 
 import { MODALITY } from '@cherrystudio/provider-registry'
-import { isManagedCherryCloudModel } from '@shared/data/presets/cherryai'
 import { resolveGatewayChatRoute } from '@shared/data/presets/gatewayChatRouting'
 import type { Model } from '@shared/data/types/model'
 import { ENDPOINT_TYPE, type EndpointType } from '@shared/data/types/model'
@@ -95,10 +94,6 @@ export function hasDshTextInput(model: Model): boolean {
 
 /** Whether a dsh agent can use this provider+model. Used for renderer filtering. */
 export function isDshCompatibleModel(provider: Provider, model: Model): boolean {
-  // Cherry Cloud is injected as an Anthropic route to Cherry's signed local gateway.
-  if (isManagedCherryCloudModel(model.providerId, model.group)) {
-    return hasKnownDshContextWindow(model) && hasDshTextInput(model)
-  }
   // No native wire family → the local API Gateway can still front any gateway-routable
   // model as OpenAI-compatible (claude's picker rule); everything else stays fail-closed.
   if (resolveDshApi(provider, model) === undefined && !isGatewayRoutableModel(model)) return false

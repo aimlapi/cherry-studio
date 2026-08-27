@@ -234,7 +234,7 @@ export function buildPiCloudGatewayInjection(
   model: Model,
   gateway: { baseUrl: string; apiKey: string; usageHeaders: Record<string, string> }
 ): PiGatewayProviderInjection {
-  if (!isManagedCherryCloudModel(model.providerId, model.group)) {
+  if (!isManagedCherryCloudModel(model.providerId)) {
     throw new PiUnsupportedProviderError(provider.id)
   }
 
@@ -321,7 +321,7 @@ export async function resolvePiProviderInjectionForSession(
   model: Model,
   enabledApiKeys?: readonly ApiKeyEntry[]
 ): Promise<PiProviderInjection> {
-  if (!isManagedCherryCloudModel(model.providerId, model.group)) {
+  if (!isManagedCherryCloudModel(model.providerId)) {
     return resolvePiProviderInjectionFromSnapshot(provider, model, enabledApiKeys)
   }
 
@@ -343,7 +343,7 @@ export async function assertPiProviderUsable(uniqueModelId: UniqueModelId): Prom
 
   // Cloud authentication is the Product Session, not a provider API key.
   // Gateway consent is checked during materialization; pi still needs complete model metadata.
-  if (isManagedCherryCloudModel(model.providerId, model.group)) {
+  if (isManagedCherryCloudModel(model.providerId)) {
     if (!hasKnownPiContextWindow(model)) throw new PiMissingContextWindowError(model.id)
     return
   }

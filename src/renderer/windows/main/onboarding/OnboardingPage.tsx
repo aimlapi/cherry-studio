@@ -22,7 +22,7 @@ import { oauthWithCherryIn } from '@renderer/services/oauth'
 import { toast } from '@renderer/services/toast'
 import { isProtectedBuiltinAgentRole } from '@shared/ai/builtinAgent'
 import type { OnboardingProviderSetupStatus } from '@shared/data/preference/preferenceTypes'
-import { CHERRYAI_DEFAULT_UNIQUE_MODEL_ID, CHERRYAI_PROVIDER_ID } from '@shared/data/presets/cherryai'
+import { CHERRYAI_DEFAULT_UNIQUE_MODEL_ID, isManagedCherryProviderId } from '@shared/data/presets/cherryai'
 import type { Model } from '@shared/data/types/model'
 import { LATEST_PRIVACY_POLICY_VERSION } from '@shared/utils/constants'
 import { defaultLanguage } from '@shared/utils/languages'
@@ -40,7 +40,7 @@ type PrivacyChoiceAction = () => void | Promise<void>
 const CHERRYIN_OAUTH_SERVER = 'https://open.cherryin.ai'
 const CHERRYIN_LOGIN_LOADING_TIMEOUT_MS = 10_000
 const PESSIMISTIC_PREFERENCE_OPTIONS = { optimistic: false } as const
-const isOnboardingModel = (model: Model) => model.providerId !== CHERRYAI_PROVIDER_ID
+const isOnboardingModel = (model: Model) => !isManagedCherryProviderId(model.providerId)
 const ONBOARDING_PREFERENCE_KEYS = {
   providerSetupStatus: 'app.onboarding.provider_setup.status',
   dataCollectionEnabled: 'app.privacy.data_collection.enabled',
@@ -81,7 +81,7 @@ export default function OnboardingPage() {
     (model) => model && isOnboardingModel(model)
   )
   const eligibleProviderIds = new Set(
-    enabledProviders.filter((provider) => provider.id !== CHERRYAI_PROVIDER_ID).map((provider) => provider.id)
+    enabledProviders.filter((provider) => !isManagedCherryProviderId(provider.id)).map((provider) => provider.id)
   )
   const hasEligibleProvider = eligibleProviderIds.size > 0
   const hasEligibleModel = enabledModels.some((model) => eligibleProviderIds.has(model.providerId))

@@ -1,4 +1,4 @@
-import { CHERRY_CLOUD_MODEL_GROUP, CHERRYAI_PROVIDER_ID } from '@shared/data/presets/cherryai'
+import { CHERRY_CLOUD_MODEL_GROUP, CHERRY_CLOUD_PROVIDER_ID } from '@shared/data/presets/cherryai'
 import { ENDPOINT_TYPE, type Model } from '@shared/data/types/model'
 import type { Provider } from '@shared/data/types/provider'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -76,7 +76,7 @@ const nativeProvider = {
 } as unknown as Provider
 
 const cloudProvider = {
-  id: CHERRYAI_PROVIDER_ID,
+  id: CHERRY_CLOUD_PROVIDER_ID,
   name: 'CherryAI',
   defaultChatEndpoint: ENDPOINT_TYPE.OPENAI_CHAT_COMPLETIONS,
   endpointConfigs: {
@@ -102,8 +102,8 @@ function makeModel(overrides: Partial<Model> = {}): Model {
 
 function makeCloudModel(overrides: Partial<Model> = {}): Model {
   return makeModel({
-    id: `${CHERRYAI_PROVIDER_ID}::deepseek-free`,
-    providerId: CHERRYAI_PROVIDER_ID,
+    id: `${CHERRY_CLOUD_PROVIDER_ID}::deepseek-free`,
+    providerId: CHERRY_CLOUD_PROVIDER_ID,
     apiModelId: 'deepseek-free',
     name: 'DeepSeek Free',
     group: CHERRY_CLOUD_MODEL_GROUP,
@@ -168,7 +168,7 @@ describe('buildDshGatewayInjection', () => {
 
     expect(injection.api).toBe('anthropic-messages')
     expect(injection.baseUrl).toBe('http://127.0.0.1:23333')
-    expect(injection.modelId).toBe('cherryai:deepseek-free')
+    expect(injection.modelId).toBe('cherry-cloud:deepseek-free')
     expect(injection.modelConfig.contextWindow).toBe(128_000)
     expect(injection.headers).toEqual(GATEWAY_USAGE_HEADERS)
     expect(injection.usageCapture).toEqual({ owner: 'provider-calls' })
@@ -219,7 +219,7 @@ describe('resolveDshProviderInjectionFromSnapshot', () => {
 
     expect(mocks.resolveApiGatewayRuntime).toHaveBeenCalledWith('session-1')
     expect(mocks.resolveApiKey).not.toHaveBeenCalled()
-    expect(injection).toMatchObject({ api: 'anthropic-messages', modelId: 'cherryai:deepseek-free' })
+    expect(injection).toMatchObject({ api: 'anthropic-messages', modelId: 'cherry-cloud:deepseek-free' })
   })
 
   it('propagates the disabled-gateway consent error for Cloud', async () => {
@@ -237,7 +237,7 @@ describe('assertDshProviderUsable', () => {
     mocks.getByKey.mockResolvedValue(makeCloudModel())
     mocks.getCurrentConfig.mockReturnValue({ enabled: false })
 
-    await expect(assertDshProviderUsable('cherryai::deepseek-free')).resolves.toBeUndefined()
+    await expect(assertDshProviderUsable('cherry-cloud::deepseek-free')).resolves.toBeUndefined()
     expect(mocks.getApiKeys).not.toHaveBeenCalled()
     expect(mocks.getCurrentConfig).not.toHaveBeenCalled()
   })

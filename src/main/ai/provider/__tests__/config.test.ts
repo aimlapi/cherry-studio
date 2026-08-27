@@ -1,5 +1,6 @@
 import {
   CHERRY_CLOUD_MODEL_GROUP,
+  CHERRY_CLOUD_PROVIDER_ID,
   CHERRYAI_API_BASE_URL,
   CHERRYAI_DEFAULT_MODEL_ID,
   CHERRYAI_DEFAULT_MODEL_NAME,
@@ -74,11 +75,11 @@ afterEach(() => {
 
 describe('providerToAiSdkConfig — builder dispatch matrix', () => {
   it('routes managed Cherry Cloud models through Anthropic without selecting a provider API key', async () => {
-    const provider = makeProvider({ id: CHERRYAI_PROVIDER_ID })
+    const provider = makeProvider({ id: CHERRY_CLOUD_PROVIDER_ID, presetProviderId: CHERRYAI_PROVIDER_ID })
     const model = makeModel({
-      id: `${CHERRYAI_PROVIDER_ID}::deepseek-go`,
+      id: `${CHERRY_CLOUD_PROVIDER_ID}::deepseek-go`,
       apiModelId: 'deepseek-go',
-      providerId: CHERRYAI_PROVIDER_ID,
+      providerId: CHERRY_CLOUD_PROVIDER_ID,
       group: CHERRY_CLOUD_MODEL_GROUP,
       endpointTypes: [ENDPOINT_TYPE.ANTHROPIC_MESSAGES]
     })
@@ -89,6 +90,21 @@ describe('providerToAiSdkConfig — builder dispatch matrix', () => {
     expect(resolved.credentialReceipt).toEqual({ attribution: 'unknown' })
     expect(buildCherryCloudProviderConfigMock).toHaveBeenCalledOnce()
     expect(resolveApiKeyMock).not.toHaveBeenCalled()
+  })
+
+  it('does not route an ordinary CherryAI model from its display group', async () => {
+    const provider = makeProvider({ id: CHERRYAI_PROVIDER_ID })
+    const model = makeModel({
+      id: `${CHERRYAI_PROVIDER_ID}::custom-model`,
+      apiModelId: 'custom-model',
+      providerId: CHERRYAI_PROVIDER_ID,
+      group: CHERRY_CLOUD_MODEL_GROUP
+    })
+
+    await resolveProviderAiSdkConfig(provider, model)
+
+    expect(buildCherryCloudProviderConfigMock).not.toHaveBeenCalled()
+    expect(resolveApiKeyMock).toHaveBeenCalledWith(CHERRYAI_PROVIDER_ID, undefined)
   })
 
   it('keeps the managed CherryAI default model on its API-key HMAC transport', async () => {
