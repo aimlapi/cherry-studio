@@ -9,5 +9,7 @@ CREATE TABLE `cherry_cloud_session` (
 	`account_id` text NOT NULL,
 	`display_name` text,
 	`device_public_key` text NOT NULL,
-	`device_private_key` text NOT NULL
+	`device_private_key` text NOT NULL,
+	`created_at` integer NOT NULL,
+	`updated_at` integer NOT NULL
 );
