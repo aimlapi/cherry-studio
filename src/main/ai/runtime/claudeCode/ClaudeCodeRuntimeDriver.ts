@@ -410,7 +410,8 @@ class ClaudeCodeRuntimeConnection implements AgentRuntimeConnection {
       connectionRebuildSignature: request.connectionConfig?.rebuildSignature,
       credentialsFingerprint: request.credentialsFingerprint,
       usageCapture: request.usageCapture,
-      knowledgeBaseIds: request.knowledgeBaseIds
+      knowledgeBaseIds: request.knowledgeBaseIds,
+      notificationContext: request.notificationContext
     })
 
     // A matching warm process may have selected a different rotated key when

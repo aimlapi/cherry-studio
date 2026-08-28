@@ -14,7 +14,8 @@ const mocks = vi.hoisted(() => ({
   findMcp: vi.fn(),
   listTools: vi.fn(),
   findBySessionId: vi.fn(),
-  resolveDshInjectionApi: vi.fn(),
+  getTurnTrustedNotifyChannels: vi.fn(),
+  usesDshGateway: vi.fn(),
   gatewayFingerprint: 'gateway-1'
 }))
 
@@ -22,6 +23,9 @@ vi.mock('@application', () => ({
   application: {
     get: (name: string) => {
       if (name === 'McpCatalogService') return { listTools: mocks.listTools }
+      if (name === 'AgentSessionRuntimeService') {
+        return { getTurnTrustedNotifyChannels: mocks.getTurnTrustedNotifyChannels }
+      }
       throw new Error(`Unexpected service: ${name}`)
     }
   }
@@ -44,11 +48,9 @@ vi.mock('@main/ai/skills/SkillService', () => ({
   }
 }))
 
-vi.mock('@main/ai/runtime/dsh/modelInjection', () => ({ resolveDshInjectionApi: mocks.resolveDshInjectionApi }))
+vi.mock('@main/ai/runtime/dsh/modelInjection', () => ({ usesDshGateway: mocks.usesDshGateway }))
 vi.mock('@main/ai/runtime/agentApiGateway', () => ({
-  readApiGatewayConnectionSnapshot: () => ({
-    fingerprint: mocks.gatewayFingerprint
-  })
+  gatewayCredentialsFingerprint: () => mocks.gatewayFingerprint
 }))
 
 const { captureDshConnectionSnapshot } = await import('./dshConnectionSignature')
@@ -79,7 +81,8 @@ beforeEach(() => {
   mocks.findMcp.mockReturnValue({ id: 'mcp-1', name: 'server', updatedAt: 1 })
   mocks.listTools.mockReturnValue([{ name: 'search', inputSchema: { type: 'object' } }])
   mocks.findBySessionId.mockReturnValue(null)
-  mocks.resolveDshInjectionApi.mockReturnValue(undefined)
+  mocks.getTurnTrustedNotifyChannels.mockReturnValue(undefined)
+  mocks.usesDshGateway.mockReturnValue(false)
   mocks.gatewayFingerprint = 'gateway-1'
 })
 
@@ -124,7 +127,7 @@ describe('captureDshConnectionSnapshot', () => {
   it('returns the exact provider, model, skills, MCP, and channel facts signed by the snapshot', async () => {
     mocks.listSkills.mockResolvedValue([{ id: 'skill-1', folderName: 'pdf', isEnabled: true }])
     mocks.listLocalSkillPaths.mockResolvedValue(['/workspace/.agents/skills/review'])
-    mocks.findBySessionId.mockReturnValue({ id: 'channel-1', agentId: agent.id })
+    mocks.findBySessionId.mockReturnValue({ id: 'channel-1', type: 'telegram', agentId: agent.id })
 
     const snapshot = await captureDshConnectionSnapshot('session-1', agent.id, 'provider::model')
 
@@ -133,9 +136,19 @@ describe('captureDshConnectionSnapshot', () => {
       model: { id: 'provider::model' },
       enabledApiKeys: [{ id: 'key-1', key: 'secret', enabled: true }],
       additionalSkillPaths: ['/skills/pdf', '/workspace/.agents/skills/review'],
-      linkedChannel: { id: 'channel-1' }
+      linkedChannel: { id: 'channel-1', type: 'telegram' }
     })
     expect(snapshot.mcpServerSnapshots.get('mcp-1')).toMatchObject({ id: 'mcp-1', name: 'server' })
+  })
+
+  it('changes its signature when task notification recipients change', async () => {
+    mocks.getTurnTrustedNotifyChannels.mockReturnValue([{ id: 'channel-1', type: 'telegram' }])
+    const first = await captureDshConnectionSnapshot('session-1', agent.id, 'provider::model')
+    mocks.getTurnTrustedNotifyChannels.mockReturnValue([{ id: 'channel-2', type: 'feishu' }])
+
+    await expect(captureDshConnectionSnapshot('session-1', agent.id, 'provider::model')).resolves.not.toMatchObject({
+      signature: first.signature
+    })
   })
 
   it('does not attach a session link owned by another agent', async () => {
@@ -147,7 +160,7 @@ describe('captureDshConnectionSnapshot', () => {
   })
 
   it('rebuilds the Cloud route when the gateway connection identity changes', async () => {
-    mocks.resolveDshInjectionApi.mockReturnValue('anthropic-messages')
+    mocks.usesDshGateway.mockReturnValue(true)
     mocks.getProvider.mockResolvedValue({ id: CHERRY_CLOUD_PROVIDER_ID })
     mocks.getModel.mockResolvedValue({
       id: `${CHERRY_CLOUD_PROVIDER_ID}::deepseek-free`,
@@ -162,6 +175,7 @@ describe('captureDshConnectionSnapshot', () => {
   })
 
   it('rebuilds non-Cloud gateway routes when the gateway identity changes', async () => {
+    mocks.usesDshGateway.mockReturnValue(true)
     const gatewaySignature = (await captureDshConnectionSnapshot('session-1', agent.id, 'provider::model')).signature
     mocks.gatewayFingerprint = 'gateway-2'
 

@@ -22,6 +22,7 @@ import { buildCitationsGuidance } from '@main/ai/runtime/citationsGuidance'
 import { wrapSteerReminder } from '@main/ai/steerReminder'
 import { toolApprovalRegistry } from '@main/ai/toolApproval/ToolApprovalRegistry'
 import { resolveKnowledgeBaseScope } from '@main/ai/utils/knowledgeScope'
+import { mergeBinaryExecutionEnv } from '@main/utils/binaryEnv'
 import type { AgentSessionContextUsage } from '@shared/ai/agentSessionContextUsage'
 import {
   KB_READ_TOOL_NAME,
@@ -31,7 +32,6 @@ import {
 } from '@shared/ai/builtinTools'
 import { type DshBuiltinToolDescriptor, getDshRuntimeBuiltinTools } from '@shared/ai/dshBuiltinTools'
 import type { AgentPermissionMode } from '@shared/data/api/schemas/agents'
-import { isManagedCherryCloudModel } from '@shared/data/presets/cherryai'
 import type { UniqueModelId } from '@shared/data/types/model'
 import type { ReasoningEffortOption } from '@shared/types/aiSdk'
 
@@ -65,11 +65,7 @@ import {
 import { loadDshSdk } from './dshSdk'
 import { type DshInvocationMetrics, DshStreamAdapter } from './dshStreamAdapter'
 import { DshTraceRecorder } from './dshTrace'
-import {
-  type DshProviderInjection,
-  resolveDshInjectionApi,
-  resolveDshProviderInjectionFromSnapshot
-} from './modelInjection'
+import { type DshProviderInjection, resolveDshProviderInjectionFromSnapshot, usesDshGateway } from './modelInjection'
 
 const logger = loggerService.withContext('DshRuntimeConnection')
 
@@ -244,12 +240,9 @@ export class DshRuntimeConnection implements AgentRuntimeConnection {
       this.input.modelId,
       this.input.knowledgeBaseIds
     )
-    const discoveryUsesGateway =
-      isManagedCherryCloudModel(discoverySnapshot.model.providerId) ||
-      resolveDshInjectionApi(discoverySnapshot.provider, discoverySnapshot.model) === undefined
     // Settle Gateway startup before the authoritative snapshot; resolve again afterward so the
     // connection is built from the exact provider/model facts protected by the final check.
-    if (discoveryUsesGateway) await resolveInjection(discoverySnapshot)
+    if (usesDshGateway(discoverySnapshot.provider, discoverySnapshot.model)) await resolveInjection(discoverySnapshot)
     await warmDshMcpToolCatalogs(discoverySnapshot.agent.mcps ?? [])
     const snapshot = await captureDshConnectionSnapshot(
       this.input.sessionId,
@@ -364,14 +357,17 @@ export class DshRuntimeConnection implements AgentRuntimeConnection {
       await this.bridge.listen()
 
       const sdk = await loadDshSdk()
+      const binaryExecutionEnv = mergeBinaryExecutionEnv(
+        process.env.PATH !== undefined ? { PATH: process.env.PATH } : {}
+      )
       // Complete replacement env — deliberate credential scope: the child sees
-      // only the routed API key and the bridge socket, never Cherry's own env.
+      // only managed binary locations, the routed API key, and the bridge socket.
       const client = new sdk.HarnessClient({
         command: process.execPath,
         args: [resolveDshRuntimeBinPath(), this.compositionPath],
         cwd: workspacePath,
         env: {
-          ...(process.env.PATH !== undefined ? { PATH: process.env.PATH } : {}),
+          ...binaryExecutionEnv,
           ...(process.env.HOME !== undefined ? { HOME: process.env.HOME } : {}),
           ELECTRON_RUN_AS_NODE: '1',
           CHERRY_DSH_API_KEY: injection.apiKey,

@@ -39,7 +39,7 @@ import { buildDshCompositionYaml } from '../compositionBuilder'
 import {
   assertDshProviderUsable,
   buildDshGatewayInjection,
-  DshMissingContextWindowError,
+  buildDshProviderInjection,
   DshUnsupportedProviderError,
   resolveDshProviderInjectionFromSnapshot
 } from '../modelInjection'
@@ -78,10 +78,10 @@ const nativeProvider = {
 const cloudProvider = {
   id: CHERRY_CLOUD_PROVIDER_ID,
   name: 'CherryAI',
-  defaultChatEndpoint: ENDPOINT_TYPE.OPENAI_CHAT_COMPLETIONS,
+  defaultChatEndpoint: ENDPOINT_TYPE.ANTHROPIC_MESSAGES,
   endpointConfigs: {
-    [ENDPOINT_TYPE.OPENAI_CHAT_COMPLETIONS]: {
-      adapterFamily: 'openai-compatible',
+    [ENDPOINT_TYPE.ANTHROPIC_MESSAGES]: {
+      adapterFamily: 'anthropic',
       baseUrl: 'https://api.cherry-ai.com'
     }
   }
@@ -174,16 +174,26 @@ describe('buildDshGatewayInjection', () => {
     expect(injection.usageCapture).toEqual({ owner: 'provider-calls' })
   })
 
-  it('rejects models the gateway cannot route and still requires a context window', () => {
+  it('rejects models the gateway cannot route and defaults an undeclared context window', () => {
     const nonChat = makeModel({ endpointTypes: [ENDPOINT_TYPE.OPENAI_EMBEDDINGS] })
     expect(() => buildDshGatewayInjection(vertexProvider, nonChat, GATEWAY)).toThrow(DshUnsupportedProviderError)
 
     const windowless = makeModel({ contextWindow: undefined })
-    expect(() => buildDshGatewayInjection(vertexProvider, windowless, GATEWAY)).toThrow(DshMissingContextWindowError)
+    expect(buildDshGatewayInjection(vertexProvider, windowless, GATEWAY).modelConfig.contextWindow).toBe(256_000)
+  })
+})
 
-    expect(() =>
-      buildDshGatewayInjection(cloudProvider, makeCloudModel({ contextWindow: undefined }), GATEWAY)
-    ).toThrow(DshMissingContextWindowError)
+describe('buildDshProviderInjection', () => {
+  it('coerces user headers to the strings the dsh route schema accepts', () => {
+    const provider = {
+      ...nativeProvider,
+      settings: { extraHeaders: { 'x-trace': 'on', 'x-legacy': 42, 'x-broken': { a: 1 } } }
+    } as unknown as Provider
+    const model = makeModel({ id: 'deepseek::deepseek-chat', providerId: 'deepseek', apiModelId: 'deepseek-chat' })
+
+    const injection = buildDshProviderInjection(provider, model, 'sk-native')
+
+    expect(injection.headers).toEqual({ 'x-trace': 'on', 'x-legacy': '42' })
   })
 })
 

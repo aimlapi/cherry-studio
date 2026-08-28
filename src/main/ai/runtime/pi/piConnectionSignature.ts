@@ -1,22 +1,26 @@
 import { createHash } from 'node:crypto'
 
 import { application } from '@application'
-import { agentChannelService } from '@data/services/AgentChannelService'
 import { agentService } from '@data/services/AgentService'
 import { agentSessionService } from '@data/services/AgentSessionService'
 import { mcpServerService } from '@data/services/McpServerService'
 import { modelService } from '@data/services/ModelService'
 import { providerService } from '@data/services/ProviderService'
-import { readApiGatewayConnectionSnapshot } from '@main/ai/runtime/agentApiGateway'
-import type { McpServerSnapshotMap } from '@main/ai/runtime/agentMcpServers'
+import { gatewayCredentialsFingerprint } from '@main/ai/runtime/agentApiGateway'
+import {
+  type McpServerSnapshotMap,
+  type NotifyChannel,
+  resolveAgentNotificationContext,
+  resolveLinkedNotifyChannel
+} from '@main/ai/runtime/agentMcpServers'
 import { skillService } from '@main/ai/skills/SkillService'
 import { resolveKnowledgeBaseScope } from '@main/ai/utils/knowledgeScope'
-import type { AgentChannelEntity } from '@shared/data/api/schemas/agentChannels'
 import type { AgentEntity } from '@shared/data/api/schemas/agents'
 import type { AgentSessionEntity } from '@shared/data/api/schemas/agentSessions'
-import { isManagedCherryCloudModel } from '@shared/data/presets/cherryai'
 import { type Model, parseUniqueModelId, type UniqueModelId } from '@shared/data/types/model'
 import type { ApiKeyEntry, Provider } from '@shared/data/types/provider'
+
+import { usesPiGateway } from './modelInjection'
 
 function stableValue(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(stableValue)
@@ -37,7 +41,7 @@ export interface PiConnectionSnapshot {
   enabledApiKeys: readonly ApiKeyEntry[]
   additionalSkillPaths: readonly string[]
   mcpServerSnapshots: McpServerSnapshotMap
-  linkedChannel: Pick<AgentChannelEntity, 'id'> | null
+  linkedChannel: NotifyChannel | null
   signature: string
 }
 
@@ -79,13 +83,11 @@ export async function capturePiConnectionSnapshot(
   const mcpTools = mcpServers.flatMap((server) =>
     'id' in server ? [{ serverId: server.id, tools: catalog.listTools(server.id, { includeDisabled: false }) }] : []
   )
-  const channel = agentChannelService.findBySessionId(sessionId)
-  const linkedChannel = channel?.agentId === agent.id ? channel : null
+  const linkedChannel = resolveLinkedNotifyChannel(sessionId, agent.id)
+  const notificationContext = resolveAgentNotificationContext(sessionId, agent.id, linkedChannel)
   const apiKeys = providerService.getApiKeys(parsed.providerId, { enabled: true })
   const configuration = { ...agent.configuration, permission_mode: undefined }
-  const cherryCloudGatewayFingerprint = isManagedCherryCloudModel(model.providerId)
-    ? readApiGatewayConnectionSnapshot().fingerprint
-    : null
+  const gatewayCredentials = usesPiGateway(provider) ? gatewayCredentialsFingerprint() : null
   const signature = createHash('sha256')
     .update(
       JSON.stringify(
@@ -100,9 +102,10 @@ export async function capturePiConnectionSnapshot(
           workspaceSkillPaths,
           mcpServers,
           mcpTools,
-          linkedChannelId: linkedChannel?.id ?? null,
+          linkedChannel,
+          notificationContext,
           knowledgeBaseIds: resolveKnowledgeBaseScope(agent.knowledgeBaseIds, selectedKnowledgeBaseIds),
-          cherryCloudGatewayFingerprint
+          gatewayCredentials
         })
       )
     )
@@ -119,7 +122,7 @@ export async function capturePiConnectionSnapshot(
       ...workspaceSkillPaths
     ],
     mcpServerSnapshots,
-    linkedChannel: linkedChannel ? { id: linkedChannel.id } : null,
+    linkedChannel,
     signature
   }
 }

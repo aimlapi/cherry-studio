@@ -1,5 +1,5 @@
 import { trace } from '@opentelemetry/api'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { AgentRuntimeConnectInput, AgentRuntimeTraceContext } from '../../types'
 
@@ -31,7 +31,8 @@ const runtimeMocks = vi.hoisted(() => ({
   snapshot: undefined as any,
   bridgeRequest: vi.fn().mockResolvedValue(undefined),
   resolveInjection: vi.fn(),
-  resolveDshInjectionApi: vi.fn()
+  usesDshGateway: vi.fn(),
+  harnessOptions: undefined as Record<string, any> | undefined
 }))
 
 const baseSnapshot = () => ({
@@ -103,7 +104,7 @@ vi.mock('../dshConnectionSignature', () => ({
 }))
 vi.mock('../modelInjection', () => ({
   resolveDshProviderInjectionFromSnapshot: runtimeMocks.resolveInjection,
-  resolveDshInjectionApi: runtimeMocks.resolveDshInjectionApi
+  usesDshGateway: runtimeMocks.usesDshGateway
 }))
 vi.mock('../compositionBuilder', () => ({
   buildDshCompositionYaml: vi.fn(() => 'plugins: []'),
@@ -133,12 +134,15 @@ vi.mock('../DshCherryToolBridge', () => ({
 }))
 vi.mock('../dshSdk', () => ({
   loadDshSdk: vi.fn().mockResolvedValue({
-    HarnessClient: vi.fn(() => ({
-      start: vi.fn(),
-      initialize: vi.fn().mockResolvedValue(undefined),
-      subscribe: vi.fn(() => (subscription = new FakeSubscription())),
-      close: vi.fn().mockResolvedValue(undefined)
-    }))
+    HarnessClient: vi.fn((options: Record<string, unknown>) => {
+      runtimeMocks.harnessOptions = options
+      return {
+        start: vi.fn(),
+        initialize: vi.fn().mockResolvedValue(undefined),
+        subscribe: vi.fn(() => (subscription = new FakeSubscription())),
+        close: vi.fn().mockResolvedValue(undefined)
+      }
+    })
   })
 }))
 vi.mock('@main/ai/agents/agentDataDirectory', () => ({
@@ -176,16 +180,21 @@ beforeEach(() => {
   runtimeMocks.snapshot = baseSnapshot()
   runtimeMocks.bridgeRequest.mockReset().mockResolvedValue(undefined)
   runtimeMocks.resolveInjection.mockReset().mockReturnValue(baseInjection())
-  runtimeMocks.resolveDshInjectionApi.mockReset().mockReturnValue('openai-completions')
+  runtimeMocks.usesDshGateway.mockReset().mockReturnValue(false)
+  runtimeMocks.harnessOptions = undefined
   vi.mocked(DshBridgeServer).mockClear()
   spans.length = 0
   startSpan.mockClear()
 })
 
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
+
 describe('DshRuntimeConnection tracing', () => {
   it('establishes the gateway baseline after starting the gateway', async () => {
     runtimeMocks.snapshot = { ...baseSnapshot(), signature: 'gateway-stopped' }
-    runtimeMocks.resolveDshInjectionApi.mockReturnValue(undefined)
+    runtimeMocks.usesDshGateway.mockReturnValue(true)
     runtimeMocks.resolveInjection.mockImplementation(() => {
       runtimeMocks.snapshot = { ...baseSnapshot(), signature: 'gateway-running' }
       return baseInjection()
@@ -194,6 +203,25 @@ describe('DshRuntimeConnection tracing', () => {
     const connection = await new DshRuntimeConnection(connectInput).start()
 
     expect(runtimeMocks.resolveInjection).toHaveBeenCalledTimes(2)
+    await connection.close()
+  })
+
+  it('exposes managed CLIs without leaking the main-process environment', async () => {
+    vi.stubEnv('PATH', '/usr/bin')
+    vi.stubEnv('CHERRY_TEST_SECRET', 'do-not-copy')
+
+    const connection = await new DshRuntimeConnection(connectInput).start()
+    const env = runtimeMocks.harnessOptions?.env as NodeJS.ProcessEnv
+
+    expect(env.PATH?.split(':')).toEqual(['/mock/feature.binary.data/shims', '/usr/bin'])
+    expect(env).toMatchObject({
+      MISE_DATA_DIR: '/mock/feature.binary.data',
+      MISE_CONFIG_DIR: '/mock/feature.binary.data/config',
+      MISE_CACHE_DIR: '/mock/feature.binary.data/cache',
+      MISE_STATE_DIR: '/mock/feature.binary.data/state',
+      MISE_SHIMS_DIR: '/mock/feature.binary.data/shims'
+    })
+    expect(env).not.toHaveProperty('CHERRY_TEST_SECRET')
     await connection.close()
   })
 
