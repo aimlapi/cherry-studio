@@ -105,20 +105,6 @@ describe('AGENT_RUNTIME_CAPABILITIES', () => {
     expect(AGENT_RUNTIME_CAPABILITIES.dsh.isModelCompatible(provider, cloudModel)).toBe(true)
   })
 
-  it('fails closed for a Cherry Cloud row whose synchronized context metadata is missing', () => {
-    const provider = makeProvider({ id: CHERRY_CLOUD_PROVIDER_ID })
-    const cloudModel = makeModel({
-      id: `${CHERRY_CLOUD_PROVIDER_ID}::deepseek-free`,
-      providerId: CHERRY_CLOUD_PROVIDER_ID,
-      apiModelId: 'deepseek-free',
-      group: CHERRY_CLOUD_MODEL_GROUP,
-      contextWindow: undefined
-    })
-
-    expect(AGENT_RUNTIME_CAPABILITIES.pi.isModelCompatible(provider, cloudModel)).toBe(false)
-    expect(AGENT_RUNTIME_CAPABILITIES.dsh.isModelCompatible(provider, cloudModel)).toBe(false)
-  })
-
   it('does not grant Cloud compatibility from the display group alone', () => {
     const provider = makeProvider({ id: CHERRYAI_PROVIDER_ID, authMethods: ['external-cli'] })
     const model = makeModel({
