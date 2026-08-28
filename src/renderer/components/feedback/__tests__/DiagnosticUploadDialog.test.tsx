@@ -22,7 +22,7 @@ const mocks = vi.hoisted(() => ({
     'settings.about.diagnostics.errors.busy': 'Another diagnostic bundle operation is already in progress',
     'settings.about.diagnostics.inspecting': 'Inspecting diagnostic data…',
     'settings.about.diagnostics.report.acknowledgement':
-      'I understand that diagnostic data may contain sensitive information and agree to send this content to Cherry Studio for troubleshooting.',
+      'I understand that the problem description and selected diagnostic data may contain sensitive information, and agree to send this content to Cherry Studio for troubleshooting.',
     'settings.about.diagnostics.report.copy_id': 'Copy feedback ID',
     'settings.about.diagnostics.report.description_label': 'Problem description',
     'settings.about.diagnostics.report.description_required': 'A problem description is required',
@@ -120,7 +120,7 @@ async function completeReview(user: ReturnType<typeof userEvent.setup>, descript
   await user.type(screen.getByRole('textbox', { name: 'Problem description' }), description)
   await user.click(
     screen.getByRole('checkbox', {
-      name: 'I understand that diagnostic data may contain sensitive information and agree to send this content to Cherry Studio for troubleshooting.'
+      name: 'I understand that the problem description and selected diagnostic data may contain sensitive information, and agree to send this content to Cherry Studio for troubleshooting.'
     })
   )
   await waitFor(() => expect(screen.getByRole('button', { name: 'Submit diagnostic report' })).toBeEnabled())
@@ -168,6 +168,43 @@ describe('DiagnosticUploadDialog', () => {
     expect(mocks.request.mock.calls.filter(([route]) => route === 'diagnostics.bundle.upload')).toHaveLength(0)
   })
 
+  it('requires acknowledgement covering a provider response-derived draft before upload', async () => {
+    const user = userEvent.setup()
+    render(
+      <DiagnosticUploadDialog
+        initialDescription="Provider rejected request for private-account@example.com"
+        open
+        onOpenChange={vi.fn()}
+      />
+    )
+
+    const description = screen.getByRole('textbox', { name: 'Problem description' })
+    expect(description).toHaveValue('Provider rejected request for private-account@example.com')
+    await user.clear(description)
+    await user.type(description, 'Reviewed provider rejection')
+
+    await waitFor(() => expect(screen.queryByText('Inspecting diagnostic data…')).not.toBeInTheDocument())
+    const submit = screen.getByRole('button', { name: 'Submit diagnostic report' })
+    expect(submit).toBeDisabled()
+    await user.click(submit)
+    expect(mocks.request.mock.calls.filter(([route]) => route === 'diagnostics.bundle.upload')).toHaveLength(0)
+
+    await user.click(
+      screen.getByRole('checkbox', {
+        name: 'I understand that the problem description and selected diagnostic data may contain sensitive information, and agree to send this content to Cherry Studio for troubleshooting.'
+      })
+    )
+    await waitFor(() => expect(submit).toBeEnabled())
+    await user.click(submit)
+
+    await waitFor(() =>
+      expect(mocks.request).toHaveBeenCalledWith(
+        'diagnostics.bundle.upload',
+        expect.objectContaining({ description: 'Reviewed provider rejection' })
+      )
+    )
+  })
+
   it('uses a fixed range without rendering range controls', async () => {
     const user = userEvent.setup()
     render(<DiagnosticUploadDialog fixedRange="24h" open onOpenChange={vi.fn()} />)
@@ -191,7 +228,7 @@ describe('DiagnosticUploadDialog', () => {
     const submit = screen.getByRole('button', { name: 'Submit diagnostic report' })
     const description = screen.getByRole('textbox', { name: 'Problem description' })
     const acknowledgement = screen.getByRole('checkbox', {
-      name: 'I understand that diagnostic data may contain sensitive information and agree to send this content to Cherry Studio for troubleshooting.'
+      name: 'I understand that the problem description and selected diagnostic data may contain sensitive information, and agree to send this content to Cherry Studio for troubleshooting.'
     })
 
     await user.click(acknowledgement)
@@ -231,7 +268,7 @@ describe('DiagnosticUploadDialog', () => {
     await user.paste('x'.repeat(4097))
     await user.click(
       screen.getByRole('checkbox', {
-        name: 'I understand that diagnostic data may contain sensitive information and agree to send this content to Cherry Studio for troubleshooting.'
+        name: 'I understand that the problem description and selected diagnostic data may contain sensitive information, and agree to send this content to Cherry Studio for troubleshooting.'
       })
     )
 
@@ -250,7 +287,7 @@ describe('DiagnosticUploadDialog', () => {
     await completeReview(user)
     const description = screen.getByRole('textbox', { name: 'Problem description' })
     const acknowledgement = screen.getByRole('checkbox', {
-      name: 'I understand that diagnostic data may contain sensitive information and agree to send this content to Cherry Studio for troubleshooting.'
+      name: 'I understand that the problem description and selected diagnostic data may contain sensitive information, and agree to send this content to Cherry Studio for troubleshooting.'
     })
 
     await user.type(description, ' Please investigate. ')
@@ -273,7 +310,7 @@ describe('DiagnosticUploadDialog', () => {
     await completeReview(user)
 
     const acknowledgement = screen.getByRole('checkbox', {
-      name: 'I understand that diagnostic data may contain sensitive information and agree to send this content to Cherry Studio for troubleshooting.'
+      name: 'I understand that the problem description and selected diagnostic data may contain sensitive information, and agree to send this content to Cherry Studio for troubleshooting.'
     })
     await user.click(screen.getByRole('radio', { name: 'Last 3 days' }))
     expect(acknowledgement).not.toBeChecked()
