@@ -507,7 +507,7 @@ describe('Cherry Cloud Pi injection', () => {
     expect(injection.providerConfig.baseUrl).toBe('http://127.0.0.1:23333')
     expect(injection.providerConfig.headers).toEqual(GATEWAY_USAGE_HEADERS)
     expect(injection.providerConfig.models?.[0]).toMatchObject({
-      id: 'cherry-cloud:deepseek-free',
+      id: 'cherryai-subscription:deepseek-free',
       contextWindow: 128_000,
       maxTokens: 8_192
     })
@@ -519,7 +519,7 @@ describe('Cherry Cloud Pi injection', () => {
     serviceMocks.resolveApiGatewayRuntime.mockResolvedValue(GATEWAY)
 
     await expect(resolvePiProviderInjectionForSession('session-1', provider, model)).resolves.toMatchObject({
-      modelId: 'cherry-cloud:deepseek-free',
+      modelId: 'cherryai-subscription:deepseek-free',
       apiKey: GATEWAY_KEY
     })
     expect(serviceMocks.resolveApiGatewayRuntime).toHaveBeenCalledWith('session-1')
@@ -584,7 +584,7 @@ describe('modelInjection service resolution', () => {
       maxOutputTokens: 8_192
     })
 
-    await expect(assertPiProviderUsable('cherry-cloud::deepseek-free')).resolves.toBeUndefined()
+    await expect(assertPiProviderUsable('cherryai-subscription::deepseek-free')).resolves.toBeUndefined()
     expect(serviceMocks.getApiKeys).not.toHaveBeenCalled()
     expect(serviceMocks.resolveApiKey).not.toHaveBeenCalled()
   })

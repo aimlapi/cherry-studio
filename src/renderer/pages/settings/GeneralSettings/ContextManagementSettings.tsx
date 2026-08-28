@@ -1,6 +1,7 @@
 import { EditableNumber, InfoTooltip, Switch } from '@cherrystudio/ui'
 import { usePreference } from '@data/hooks/usePreference'
 import { DefaultModelSelector } from '@renderer/components/DefaultModelSelector'
+import type { ModelSelectorFilter } from '@renderer/components/ModelSelector'
 import {
   SettingDescription,
   SettingDivider,
@@ -12,13 +13,15 @@ import {
 import { useModelById } from '@renderer/hooks/useModel'
 import { useProviders } from '@renderer/hooks/useProvider'
 import { useTheme } from '@renderer/hooks/useTheme'
+import { isModelVisibleOutsideAgent } from '@renderer/utils/agent/modelVisibility'
 import { MIN_TRUNCATE_THRESHOLD } from '@shared/data/types/contextSettings'
 import type { Model, UniqueModelId } from '@shared/data/types/model'
 import { isNonChatModel } from '@shared/utils/model'
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 
-const chatModelFilter = (model: Model) => !isNonChatModel(model)
+const chatModelFilter: ModelSelectorFilter = (model, provider) =>
+  isModelVisibleOutsideAgent(model, provider) && !isNonChatModel(model)
 
 const SettingRowTitleWithTooltip = ({ title, description }: { title: string; description: string }) => (
   <SettingRowTitle className="gap-1">
