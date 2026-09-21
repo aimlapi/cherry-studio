@@ -1,11 +1,11 @@
 {
   "minAppVersion": "2.0.9",
   "sourceAppVersion": "{\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/releases/releases#get-the-latest-release\",\"status\":\"404\"}",
-  "revision": 5,
+  "revision": 6,
   "schemaVersion": 1,
   "files": {
-    "models.json": "ace7f3040da21e71",
-    "providers.json": "26c644d4b271adca",
-    "provider-models.json": "a69a841fcbea34d1"
+    "models.json": "11174ce97b90176e",
+    "providers.json": "9c1cdd0618d079ee",
+    "provider-models.json": "f418fc7b44b466bb"
   }
 }
