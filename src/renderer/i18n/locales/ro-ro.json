@@ -4977,6 +4977,7 @@
   "settings.mcp.argsTooltip": "Fiecare argument pe o linie nouă",
   "settings.mcp.baseUrlTooltip": "URL de bază server la distanță",
   "settings.mcp.builtinServers": "Servere integrate",
+  "settings.mcp.builtinServersDescriptions.aimlapi": "Conectează-te la AI/ML API pentru a găsi și compara modele AI, a rula chat, embeddings și generare de imagini, video și audio și a apela Agent Tools precum căutarea web și extragerea paginilor. Necesită autorizarea contului AI/ML API.",
   "settings.mcp.builtinServersDescriptions.brave_search": "O implementare de server MCP care integrează API-ul Brave Search, oferind funcționalități de căutare web și locală. Necesită configurarea variabilei de mediu BRAVE_API_KEY",
   "settings.mcp.builtinServersDescriptions.browser": "Navighează folosind instantanee ale paginilor, apasă și introdu text în elemente, schimbă filele și gestionează dialogurile. Rulează implicit în fundal.",
   "settings.mcp.builtinServersDescriptions.didi_mcp": "Server DiDi MCP care oferă servicii de ride-hailing, inclusiv căutare pe hartă, estimare preț, gestionare comenzi și urmărire șofer. Disponibil doar în China continentală. Necesită configurarea variabilei de mediu DIDI_API_KEY",

@@ -4977,6 +4977,7 @@
   "settings.mcp.argsTooltip": "每个参数占一行",
   "settings.mcp.baseUrlTooltip": "远程 URL 地址",
   "settings.mcp.builtinServers": "内置服务器",
+  "settings.mcp.builtinServersDescriptions.aimlapi": "连接 AI/ML API，查找和比较 AI 模型，运行对话、向量嵌入以及图像、视频和音频生成，并调用网页搜索、页面提取等 Agent Tools。需要 AI/ML API 账号授权。",
   "settings.mcp.builtinServersDescriptions.brave_search": "一个集成了Brave 搜索 API 的 MCP 服务器实现，提供网页与本地搜索双重功能。需要配置 BRAVE_API_KEY 环境变量",
   "settings.mcp.builtinServersDescriptions.browser": "通过页面快照浏览网页，点击和输入、切换标签页及处理对话框。默认在后台运行。",
   "settings.mcp.builtinServersDescriptions.didi_mcp": "一个集成了滴滴 MCP 服务器实现，提供网约车服务包括地图搜索、价格预估、订单管理和司机跟踪。仅支持中国大陆地区。需要配置 DIDI_API_KEY 环境变量",

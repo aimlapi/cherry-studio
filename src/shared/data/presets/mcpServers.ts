@@ -56,6 +56,17 @@ export const PRESET_MCP_SERVERS = freezePresets([
     isTrusted: true
   },
   {
+    name: BuiltinMcpServerNames.aimlapi,
+    reference: 'https://docs.aimlapi.com/quickstart/mcp',
+    type: 'streamableHttp',
+    baseUrl: 'https://mcp.aimlapi.com/mcp',
+    headers: { APP: 'Cherry Studio' },
+    isActive: false,
+    provider: 'AI/ML API',
+    installSource: 'builtin',
+    isTrusted: true
+  },
+  {
     name: BuiltinMcpServerNames.mcpAutoInstall,
     reference: 'https://cherryai.com/docs/en/advanced-basic/extensions/mcp/',
     type: 'stdio',

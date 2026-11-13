@@ -4977,6 +4977,7 @@
   "settings.mcp.argsTooltip": "1行に1つの引数を入力してください",
   "settings.mcp.baseUrlTooltip": "リモートURLアドレス",
   "settings.mcp.builtinServers": "組み込みサーバー",
+  "settings.mcp.builtinServersDescriptions.aimlapi": "AI/ML API に接続して、AI モデルの検索と比較、チャット、埋め込み、画像・動画・音声の生成を行い、ウェブ検索やページ抽出などの Agent Tools を呼び出せます。AI/ML API アカウントの認可が必要です。",
   "settings.mcp.builtinServersDescriptions.brave_search": "Brave検索APIを統合したMCPサーバーの実装で、ウェブ検索とローカル検索の両機能を提供します。BRAVE_API_KEY環境変数の設定が必要です",
   "settings.mcp.builtinServersDescriptions.browser": "ページのスナップショットを確認し、要素のクリックや入力、タブの移動、ダイアログの操作ができます。既定ではバックグラウンドで動作します。",
   "settings.mcp.builtinServersDescriptions.didi_mcp": "DiDi MCPサーバーは、地図検索、料金見積もり、注文管理、ドライバー追跡を含むライドシェアサービスを提供します。中国本土でのみ利用可能です。DIDI_API_KEY環境変数の設定が必要です",

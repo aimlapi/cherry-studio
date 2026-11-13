@@ -4977,6 +4977,7 @@
   "settings.mcp.argsTooltip": "Her satıra bir bağımsız değişken",
   "settings.mcp.baseUrlTooltip": "Uzak sunucunun temel URL'si",
   "settings.mcp.builtinServers": "Yerleşik Sunucular",
+  "settings.mcp.builtinServersDescriptions.aimlapi": "Yapay zekâ modellerini bulmak ve karşılaştırmak, sohbet, embedding ve görsel, video ve ses üretimi çalıştırmak ve web araması ile sayfa içeriği çıkarma gibi Agent Tools'u çağırmak için AI/ML API'ye bağlanır. AI/ML API hesabı yetkilendirmesi gerekir.",
   "settings.mcp.builtinServersDescriptions.brave_search": "Hem web hem de yerel arama işlevleri sunan, Brave Search API ile entegre bir MCP sunucu uygulaması. BRAVE_API_KEY ortam değişkeninin yapılandırılmasını gerektirir",
   "settings.mcp.builtinServersDescriptions.browser": "Sayfa anlık görüntüleriyle gezinin, öğelere tıklayıp metin girin, sekmeler arasında geçiş yapın ve iletişim kutularını yönetin. Varsayılan olarak arka planda çalışır.",
   "settings.mcp.builtinServersDescriptions.didi_mcp": "Harita arama, fiyat tahmini, sipariş yönetimi ve sürücü takibi dâhil araç çağırma hizmetleri sunan DiDi MCP sunucusu. Yalnızca Çin ana karasında kullanılabilir. DIDI_API_KEY ortam değişkeninin yapılandırılması gerekir",

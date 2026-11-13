@@ -4977,6 +4977,7 @@
   "settings.mcp.argsTooltip": "แต่ละอาร์กิวเมนต์ในบรรทัดใหม่",
   "settings.mcp.baseUrlTooltip": "URL ฐานของเซิร์ฟเวอร์ระยะไกล",
   "settings.mcp.builtinServers": "เซิร์ฟเวอร์ในตัว",
+  "settings.mcp.builtinServersDescriptions.aimlapi": "เชื่อมต่อกับ AI/ML API เพื่อค้นหาและเปรียบเทียบโมเดล AI เรียกใช้แชท เอ็มเบดดิง และการสร้างภาพ วิดีโอ และเสียง รวมถึงเรียกใช้ Agent Tools เช่น การค้นหาเว็บและการดึงเนื้อหาหน้าเว็บ ต้องอนุญาตบัญชี AI/ML API",
   "settings.mcp.builtinServersDescriptions.brave_search": "MCP server ที่รวม Brave Search API ให้ฟังก์ชันค้นหาเว็บและค้นหาในเครื่อง ต้องกำหนดค่าตัวแปรสภาพแวดล้อม BRAVE_API_KEY",
   "settings.mcp.builtinServersDescriptions.browser": "ควบคุมหน้าต่าง Electron แบบ headless ผ่าน Chrome DevTools Protocol เครื่องมือ: เปิด URL, รัน JS บรรทัดเดียว, รีเซ็ตเซสชัน",
   "settings.mcp.builtinServersDescriptions.didi_mcp": "MCP server ของ DiDi ที่ให้บริการเรียกรถรวมถึงการค้นหาแผนที่ ประมาณราคา การจัดการออเดอร์ และการติดตามคนขับ เฉพาะในจีนแผ่นดินใหญ่ ต้องกำหนดค่าตัวแปรสภาพแวดล้อม DIDI_API_KEY",

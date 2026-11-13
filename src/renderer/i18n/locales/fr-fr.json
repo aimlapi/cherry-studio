@@ -4977,6 +4977,7 @@
   "settings.mcp.argsTooltip": "Chaque argument sur une ligne",
   "settings.mcp.baseUrlTooltip": "Adresse URL distante",
   "settings.mcp.builtinServers": "Serveurs intégrés",
+  "settings.mcp.builtinServersDescriptions.aimlapi": "Connectez-vous à AI/ML API pour trouver et comparer des modèles d'IA, exécuter le chat, les embeddings et la génération d'images, de vidéos et d'audio, et appeler des Agent Tools comme la recherche web et l'extraction de pages. Nécessite l'autorisation du compte AI/ML API.",
   "settings.mcp.builtinServersDescriptions.brave_search": "Une implémentation de serveur MCP intégrant l'API de recherche Brave, offrant des fonctionnalités de recherche web et locale. Nécessite la configuration de la variable d'environnement BRAVE_API_KEY",
   "settings.mcp.builtinServersDescriptions.browser": "Parcourez les pages avec des instantanés, cliquez et saisissez du texte, naviguez entre les onglets et gérez les boîtes de dialogue. Fonctionne en arrière-plan par défaut.",
   "settings.mcp.builtinServersDescriptions.didi_mcp": "Serveur DiDi MCP fournissant des services de transport incluant la recherche de cartes, l'estimation des prix, la gestion des commandes et le suivi des conducteurs. Disponible uniquement en Chine continentale. Nécessite la configuration de la variable d'environnement DIDI_API_KEY",
